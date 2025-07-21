@@ -1,5 +1,6 @@
 # Binaries
 jwks-mock-api
+jwks-mock-api-*
 *.exe
 *.exe~
 *.dll
