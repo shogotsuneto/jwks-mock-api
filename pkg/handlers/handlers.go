@@ -29,13 +29,10 @@ func New(cfg *config.Config, keyManager *keys.Manager) *Handler {
 	}
 }
 
-// TokenRequest represents a token generation request
+// TokenRequest represents a token generation request with dynamic claims
 type TokenRequest struct {
-	UserID    string   `json:"userId,omitempty"`
-	Email     string   `json:"email,omitempty"`
-	Name      string   `json:"name,omitempty"`
-	Roles     []string `json:"roles,omitempty"`
-	ExpiresIn string   `json:"expiresIn,omitempty"`
+	ExpiresIn string                 `json:"expiresIn,omitempty"`
+	Claims    map[string]interface{} `json:"-"` // Will be populated from the full JSON
 }
 
 // TokenResponse represents a token generation response
@@ -99,29 +96,32 @@ func (h *Handler) JWKS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GenerateToken generates a new JWT token
+// GenerateToken generates a new JWT token with dynamic claims
 func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
-	var req TokenRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	// Parse the request body as a generic map to capture all fields
+	var rawRequest map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&rawRequest); err != nil {
 		http.Error(w, `{"error": "Invalid JSON request"}`, http.StatusBadRequest)
 		return
 	}
 
-	// Set defaults
-	if req.UserID == "" {
-		req.UserID = "test-user"
+	// Extract expiresIn if present, default to "1h"
+	expiresIn := "1h"
+	if exp, ok := rawRequest["expiresIn"].(string); ok && exp != "" {
+		expiresIn = exp
 	}
-	if req.Email == "" {
-		req.Email = "test@example.com"
-	}
-	if req.Name == "" {
-		req.Name = "Test User"
-	}
-	if len(req.Roles) == 0 {
-		req.Roles = []string{"user"}
-	}
-	if req.ExpiresIn == "" {
-		req.ExpiresIn = "1h"
+
+	// Remove expiresIn from claims as it's not a JWT claim
+	delete(rawRequest, "expiresIn")
+
+	// Set default claims if the request is empty
+	if len(rawRequest) == 0 {
+		rawRequest = map[string]interface{}{
+			"userId": "test-user",
+			"email":  "test@example.com",
+			"name":   "Test User",
+			"roles":  []string{"user"},
+		}
 	}
 
 	// Get a random key for signing
@@ -134,23 +134,23 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 
 	// Calculate expiration
 	exp := time.Now().Add(time.Hour) // Default 1 hour
-	if req.ExpiresIn != "1h" {
-		if seconds, err := strconv.Atoi(req.ExpiresIn); err == nil {
+	if expiresIn != "1h" {
+		if seconds, err := strconv.Atoi(expiresIn); err == nil {
 			exp = time.Now().Add(time.Duration(seconds) * time.Second)
 		}
 	}
 
-	// Create claims
-	claims := jwt.MapClaims{
-		"sub":   req.UserID,
-		"email": req.Email,
-		"name":  req.Name,
-		"roles": req.Roles,
-		"iat":   time.Now().Unix(),
-		"exp":   exp.Unix(),
-		"iss":   h.config.JWT.Issuer,
-		"aud":   h.config.JWT.Audience,
+	// Create claims starting with the dynamic claims from the request
+	claims := jwt.MapClaims{}
+	for key, value := range rawRequest {
+		claims[key] = value
 	}
+
+	// Add standard JWT claims (these override any user-provided values for security)
+	claims["iat"] = time.Now().Unix()
+	claims["exp"] = exp.Unix()
+	claims["iss"] = h.config.JWT.Issuer
+	claims["aud"] = h.config.JWT.Audience
 
 	// Create token
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
@@ -167,14 +167,9 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 	response := TokenResponse{
 		AccessToken: tokenString,
 		TokenType:   "Bearer",
-		ExpiresIn:   req.ExpiresIn,
+		ExpiresIn:   expiresIn,
 		KeyID:       keyPair.Kid,
-		User: map[string]interface{}{
-			"id":    req.UserID,
-			"email": req.Email,
-			"name":  req.Name,
-			"roles": req.Roles,
-		},
+		User:        rawRequest, // Include all the dynamic user data
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -307,28 +302,32 @@ func (h *Handler) QuickToken(w http.ResponseWriter, r *http.Request) {
 }
 
 // GenerateInvalidToken generates an invalid token for testing
+// GenerateInvalidToken generates an invalid JWT token for testing
 func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
-	var req TokenRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	// Parse the request body as a generic map to capture all fields
+	var rawRequest map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&rawRequest); err != nil {
 		http.Error(w, `{"error": "Invalid JSON request"}`, http.StatusBadRequest)
 		return
 	}
 
-	// Set defaults
-	if req.UserID == "" {
-		req.UserID = "invalid-test-user"
+	// Extract expiresIn if present, default to "1h"
+	expiresIn := "1h"
+	if exp, ok := rawRequest["expiresIn"].(string); ok && exp != "" {
+		expiresIn = exp
 	}
-	if req.Email == "" {
-		req.Email = "invalid-test@example.com"
-	}
-	if req.Name == "" {
-		req.Name = "Invalid Test User"
-	}
-	if len(req.Roles) == 0 {
-		req.Roles = []string{"user"}
-	}
-	if req.ExpiresIn == "" {
-		req.ExpiresIn = "1h"
+
+	// Remove expiresIn from claims as it's not a JWT claim
+	delete(rawRequest, "expiresIn")
+
+	// Set default claims if the request is empty
+	if len(rawRequest) == 0 {
+		rawRequest = map[string]interface{}{
+			"userId": "invalid-test-user",
+			"email":  "invalid-test@example.com",
+			"name":   "Invalid Test User",
+			"roles":  []string{"user"},
+		}
 	}
 
 	// Get a valid key to use its kid
@@ -349,23 +348,23 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 
 	// Calculate expiration
 	exp := time.Now().Add(time.Hour) // Default 1 hour
-	if req.ExpiresIn != "1h" {
-		if seconds, err := strconv.Atoi(req.ExpiresIn); err == nil {
+	if expiresIn != "1h" {
+		if seconds, err := strconv.Atoi(expiresIn); err == nil {
 			exp = time.Now().Add(time.Duration(seconds) * time.Second)
 		}
 	}
 
-	// Create claims
-	claims := jwt.MapClaims{
-		"sub":   req.UserID,
-		"email": req.Email,
-		"name":  req.Name,
-		"roles": req.Roles,
-		"iat":   time.Now().Unix(),
-		"exp":   exp.Unix(),
-		"iss":   h.config.JWT.Issuer,
-		"aud":   h.config.JWT.Audience,
+	// Create claims starting with the dynamic claims from the request
+	claims := jwt.MapClaims{}
+	for key, value := range rawRequest {
+		claims[key] = value
 	}
+
+	// Add standard JWT claims (these override any user-provided values for security)
+	claims["iat"] = time.Now().Unix()
+	claims["exp"] = exp.Unix()
+	claims["iss"] = h.config.JWT.Issuer
+	claims["aud"] = h.config.JWT.Audience
 
 	// Create token with valid kid but sign with invalid key
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
@@ -382,14 +381,9 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	response := TokenResponse{
 		AccessToken: tokenString,
 		TokenType:   "Bearer",
-		ExpiresIn:   req.ExpiresIn,
+		ExpiresIn:   expiresIn,
 		KeyID:       validKey.Kid,
-		User: map[string]interface{}{
-			"id":    req.UserID,
-			"email": req.Email,
-			"name":  req.Name,
-			"roles": req.Roles,
-		},
+		User:        rawRequest, // Include all the dynamic user data
 	}
 
 	w.Header().Set("Content-Type", "application/json")
