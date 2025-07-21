@@ -30,9 +30,7 @@ cd jwks-mock-api && make build && ./jwks-mock-api
 |--------|------|-------------|
 | GET | `/.well-known/jwks.json` | Standard JWKS endpoint |
 | POST | `/generate-token` | Generate JWT with **dynamic claims** |
-| GET | `/quick-token?userId=user123` | Quick token generation |
 | POST | `/generate-invalid-token` | Invalid token for testing |
-| GET | `/quick-invalid-token?userId=user123` | Quick invalid token |
 | POST | `/validate-token` | Validate JWT token |
 | GET | `/health` | Health check |
 | GET | `/keys` | Available keys info |
@@ -70,7 +68,7 @@ Run with: `./jwks-mock-api -config config.yaml`
 ```bash
 curl -X POST http://localhost:3000/generate-token \
   -H "Content-Type: application/json" \
-  -d '{"userId": "user123", "role": "admin"}'
+  -d '{"sub": "user123", "role": "admin"}'
 ```
 
 **Complex Claims:**
@@ -78,7 +76,7 @@ curl -X POST http://localhost:3000/generate-token \
 curl -X POST http://localhost:3000/generate-token \
   -H "Content-Type: application/json" \
   -d '{
-    "userId": "user123",
+    "sub": "user123",
     "profile": {
       "name": "John Doe",
       "email": "john@example.com",
@@ -106,8 +104,6 @@ curl -X POST http://localhost:3000/generate-token \
 > **Note:** Standard JWT fields (`iat`, `exp`, `iss`, `aud`) are automatically added. The `expiresIn` field controls token expiration and is not included as a claim.
 
 ### Other Examples
-
-**Quick Token:** `curl "http://localhost:3000/quick-token?userId=testuser"`
 
 **Validate Token:**
 ```bash

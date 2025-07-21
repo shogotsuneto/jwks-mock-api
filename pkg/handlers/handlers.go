@@ -66,12 +66,7 @@ type KeysResponse struct {
 	AvailableKeys []map[string]interface{} `json:"available_keys"`
 }
 
-// QuickTokenResponse represents a quick token response
-type QuickTokenResponse struct {
-	Token       string `json:"token"`
-	KeyID       string `json:"key_id"`
-	CurlExample string `json:"curl_example"`
-}
+
 
 // JWKS returns the JSON Web Key Set
 func (h *Handler) JWKS(w http.ResponseWriter, r *http.Request) {
@@ -248,54 +243,7 @@ func (h *Handler) ValidateToken(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// QuickToken generates a quick token for testing
-func (h *Handler) QuickToken(w http.ResponseWriter, r *http.Request) {
-	userID := r.URL.Query().Get("userId")
-	if userID == "" {
-		userID = "quick-user"
-	}
 
-	// Get a random key for signing
-	keyPair, err := h.keyManager.GetRandomKey()
-	if err != nil {
-		log.Printf("Error getting random key: %v", err)
-		http.Error(w, `{"error": "Failed to get signing key"}`, http.StatusInternalServerError)
-		return
-	}
-
-	// Create claims
-	claims := jwt.MapClaims{
-		"sub":   userID,
-		"email": fmt.Sprintf("%s@example.com", userID),
-		"name":  fmt.Sprintf("%s User", userID),
-		"roles": []string{"user"},
-		"iat":   time.Now().Unix(),
-		"exp":   time.Now().Add(time.Hour).Unix(),
-		"iss":   h.config.JWT.Issuer,
-		"aud":   h.config.JWT.Audience,
-	}
-
-	// Create token
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = keyPair.Kid
-
-	// Sign token
-	tokenString, err := token.SignedString(keyPair.PrivateKey)
-	if err != nil {
-		log.Printf("Error signing token: %v", err)
-		http.Error(w, `{"error": "Failed to sign token"}`, http.StatusInternalServerError)
-		return
-	}
-
-	response := QuickTokenResponse{
-		Token:       tokenString,
-		KeyID:       keyPair.Kid,
-		CurlExample: fmt.Sprintf(`curl -H "Authorization: Bearer %s" <your-api-endpoint>`, tokenString),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
 
 // GenerateInvalidToken generates an invalid token for testing
 // GenerateInvalidToken generates an invalid JWT token for testing
@@ -319,10 +267,10 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	// Set default claims if the request is empty
 	if len(rawRequest) == 0 {
 		rawRequest = map[string]interface{}{
-			"userId": "invalid-test-user",
-			"email":  "invalid-test@example.com",
-			"name":   "Invalid Test User",
-			"roles":  []string{"user"},
+			"sub":   "invalid-test-user",
+			"email": "invalid-test@example.com",
+			"name":  "Invalid Test User",
+			"roles": []string{"user"},
 		}
 	}
 
@@ -386,63 +334,7 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// QuickInvalidToken generates a quick invalid token for testing
-func (h *Handler) QuickInvalidToken(w http.ResponseWriter, r *http.Request) {
-	userID := r.URL.Query().Get("userId")
-	if userID == "" {
-		userID = "quick-invalid-user"
-	}
 
-	// Get a valid key to use its kid
-	validKey, err := h.keyManager.GetRandomKey()
-	if err != nil {
-		log.Printf("Error getting random key: %v", err)
-		http.Error(w, `{"error": "Failed to get signing key"}`, http.StatusInternalServerError)
-		return
-	}
-
-	// Generate a temporary invalid key pair
-	invalidPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		log.Printf("Error generating invalid key: %v", err)
-		http.Error(w, `{"error": "Failed to generate invalid key"}`, http.StatusInternalServerError)
-		return
-	}
-
-	// Create claims
-	claims := jwt.MapClaims{
-		"sub":   userID,
-		"email": fmt.Sprintf("%s@example.com", userID),
-		"name":  fmt.Sprintf("%s User", userID),
-		"roles": []string{"user"},
-		"iat":   time.Now().Unix(),
-		"exp":   time.Now().Add(time.Hour).Unix(),
-		"iss":   h.config.JWT.Issuer,
-		"aud":   h.config.JWT.Audience,
-	}
-
-	// Create token with valid kid but sign with invalid key
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = validKey.Kid
-
-	// Sign token with invalid key
-	tokenString, err := token.SignedString(invalidPrivateKey)
-	if err != nil {
-		log.Printf("Error signing invalid token: %v", err)
-		http.Error(w, `{"error": "Failed to sign invalid token"}`, http.StatusInternalServerError)
-		return
-	}
-
-	response := map[string]interface{}{
-		"token":        tokenString,
-		"key_id":       validKey.Kid,
-		"note":         "Invalid token - same kid as valid key but signed with different key",
-		"curl_example": fmt.Sprintf(`curl -H "Authorization: Bearer %s" <your-api-endpoint>`, tokenString),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
 
 // Health returns the health status of the service
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {

@@ -72,8 +72,6 @@ func (s *Server) Start() error {
 	log.Printf("JWKS endpoint: http://%s:%d/.well-known/jwks.json", s.config.Server.Host, s.config.Server.Port)
 	log.Printf("Generate token: POST http://%s:%d/generate-token", s.config.Server.Host, s.config.Server.Port)
 	log.Printf("Generate invalid token: POST http://%s:%d/generate-invalid-token", s.config.Server.Host, s.config.Server.Port)
-	log.Printf("Quick token: GET http://%s:%d/quick-token", s.config.Server.Host, s.config.Server.Port)
-	log.Printf("Quick invalid token: GET http://%s:%d/quick-invalid-token", s.config.Server.Host, s.config.Server.Port)
 	log.Printf("Keys info: GET http://%s:%d/keys", s.config.Server.Host, s.config.Server.Port)
 
 	// Start server in a goroutine
@@ -105,10 +103,6 @@ func (s *Server) setupRoutes() *mux.Router {
 
 	// Token validation endpoint
 	router.HandleFunc("/validate-token", s.handler.ValidateToken).Methods("POST")
-
-	// Quick token endpoints
-	router.HandleFunc("/quick-token", s.handler.QuickToken).Methods("GET")
-	router.HandleFunc("/quick-invalid-token", s.handler.QuickInvalidToken).Methods("GET")
 
 	// Health and info endpoints
 	router.HandleFunc("/health", s.handler.Health).Methods("GET")
