@@ -29,11 +29,7 @@ func New(cfg *config.Config, keyManager *keys.Manager) *Handler {
 	}
 }
 
-// TokenRequest represents a token generation request with dynamic claims
-type TokenRequest struct {
-	ExpiresIn string                 `json:"expiresIn,omitempty"`
-	Claims    map[string]interface{} `json:"-"` // Will be populated from the full JSON
-}
+
 
 // TokenResponse represents a token generation response
 type TokenResponse struct {
@@ -41,7 +37,7 @@ type TokenResponse struct {
 	TokenType   string                 `json:"token_type"`
 	ExpiresIn   string                 `json:"expires_in"`
 	KeyID       string                 `json:"key_id"`
-	User        map[string]interface{} `json:"user"`
+	RawRequest  map[string]interface{} `json:"raw_request"`
 }
 
 // ValidationRequest represents a token validation request
@@ -117,10 +113,10 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 	// Set default claims if the request is empty
 	if len(rawRequest) == 0 {
 		rawRequest = map[string]interface{}{
-			"userId": "test-user",
-			"email":  "test@example.com",
-			"name":   "Test User",
-			"roles":  []string{"user"},
+			"sub":   "test-user",
+			"email": "test@example.com",
+			"name":  "Test User",
+			"roles": []string{"user"},
 		}
 	}
 
@@ -169,7 +165,7 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 		TokenType:   "Bearer",
 		ExpiresIn:   expiresIn,
 		KeyID:       keyPair.Kid,
-		User:        rawRequest, // Include all the dynamic user data
+		RawRequest:  rawRequest, // Include all the dynamic request data
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -383,7 +379,7 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 		TokenType:   "Bearer",
 		ExpiresIn:   expiresIn,
 		KeyID:       validKey.Kid,
-		User:        rawRequest, // Include all the dynamic user data
+		RawRequest:  rawRequest, // Include all the dynamic request data
 	}
 
 	w.Header().Set("Content-Type", "application/json")
