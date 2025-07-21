@@ -49,7 +49,7 @@ func Load(configFile string) (*Config, error) {
 		},
 		Keys: KeysConfig{
 			Count:  2,
-			KeyIDs: []string{"dev-key-1", "dev-key-2"},
+			KeyIDs: []string{"key-1", "key-2"},
 		},
 		LogLevel: "info",
 	}
@@ -101,12 +101,6 @@ func loadFromEnv(config *Config) {
 		config.LogLevel = logLevel
 	}
 
-	if keyCount := os.Getenv("KEY_COUNT"); keyCount != "" {
-		if count, err := strconv.Atoi(keyCount); err == nil && count > 0 {
-			config.Keys.Count = count
-		}
-	}
-
 	if keyIDs := os.Getenv("KEY_IDS"); keyIDs != "" {
 		ids := strings.Split(keyIDs, ",")
 		for i := range ids {
@@ -114,5 +108,16 @@ func loadFromEnv(config *Config) {
 		}
 		config.Keys.KeyIDs = ids
 		config.Keys.Count = len(ids)
+	} else if keyCount := os.Getenv("KEY_COUNT"); keyCount != "" {
+		if count, err := strconv.Atoi(keyCount); err == nil && count > 0 {
+			config.Keys.Count = count
+			// Generate generic key IDs based on count if no specific IDs provided
+			if len(config.Keys.KeyIDs) == 0 || len(config.Keys.KeyIDs) != count {
+				config.Keys.KeyIDs = make([]string, count)
+				for i := 0; i < count; i++ {
+					config.Keys.KeyIDs[i] = fmt.Sprintf("key-%d", i+1)
+				}
+			}
+		}
 	}
 }

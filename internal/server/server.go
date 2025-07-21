@@ -31,13 +31,6 @@ func New(cfg *config.Config) (*Server, error) {
 
 	// Generate keys based on configuration
 	keyIDs := cfg.Keys.KeyIDs
-	if len(keyIDs) == 0 {
-		// Generate default key IDs if none provided
-		keyIDs = make([]string, cfg.Keys.Count)
-		for i := 0; i < cfg.Keys.Count; i++ {
-			keyIDs[i] = fmt.Sprintf("dev-key-%d", i+1)
-		}
-	}
 
 	if err := keyManager.GenerateKeys(keyIDs); err != nil {
 		return nil, fmt.Errorf("failed to generate keys: %w", err)

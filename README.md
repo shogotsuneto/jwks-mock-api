@@ -1,5 +1,7 @@
 # JWKS Mock API
 
+*This project is bootstrapped by GitHub Copilot, including this documentation.*
+
 A lightweight mock JSON Web Key Set (JWKS) service for backend API development and testing. This service provides JWT token generation, validation, and JWKS endpoints for development environments.
 
 ## Features
@@ -13,6 +15,20 @@ A lightweight mock JSON Web Key Set (JWKS) service for backend API development a
 - **Flexible configuration**: Environment variables and config file support
 - **Docker support**: Small container image for easy deployment
 - **CORS enabled**: Ready for browser-based testing
+
+## Use Cases
+
+### Backend API Development
+Use this service to provide JWT tokens for your development APIs without needing a full authentication system.
+
+### Testing JWT Validation
+Generate both valid and invalid tokens to test your JWT validation logic.
+
+### Integration Testing
+Include this service in your test environments to provide consistent JWT tokens.
+
+### Local Development
+Run locally to avoid dependencies on external authentication services during development.
 
 ## Quick Start
 
@@ -71,7 +87,7 @@ make run
 | `JWT_ISSUER` | `http://localhost:3000` | JWT issuer claim |
 | `JWT_AUDIENCE` | `dev-api` | JWT audience claim |
 | `KEY_COUNT` | `2` | Number of RSA key pairs to generate |
-| `KEY_IDS` | `dev-key-1,dev-key-2` | Comma-separated key IDs |
+| `KEY_IDS` | `key-1,key-2` | Comma-separated key IDs |
 | `LOG_LEVEL` | `info` | Log level (debug, info, warn, error) |
 
 ### Configuration File
@@ -90,8 +106,8 @@ jwt:
 keys:
   count: 2
   key_ids:
-    - "dev-key-1"
-    - "dev-key-2"
+    - "key-1"
+    - "key-2"
 
 log_level: "info"
 ```
@@ -120,10 +136,10 @@ curl -X POST http://localhost:3000/generate-token \
 Response:
 ```json
 {
-  "access_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImRldi1rZXktMSIsInR5cCI6IkpXVCJ9...",
+  "access_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtleS0xIiwiaW5hLWwdM0NiIsInR5cCI6IkpXVCJ9...",
   "token_type": "Bearer",
   "expires_in": "1h",
-  "key_id": "dev-key-1",
+  "key_id": "key-1",
   "user": {
     "id": "user123",
     "email": "user123@example.com",
@@ -145,7 +161,7 @@ curl "http://localhost:3000/quick-token?userId=testuser"
 curl -X POST http://localhost:3000/validate-token \
   -H "Content-Type: application/json" \
   -d '{
-    "token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImRldi1rZXktMSIsInR5cCI6IkpXVCJ9..."
+    "token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtleS0xIiwiaW5hLWwdM0NiIsInR5cCI6IkpXVCJ9..."
   }'
 ```
 
@@ -207,20 +223,6 @@ make docker-run
 make docker-run-env
 ```
 
-## Use Cases
-
-### Backend API Development
-Use this service to provide JWT tokens for your development APIs without needing a full authentication system.
-
-### Testing JWT Validation
-Generate both valid and invalid tokens to test your JWT validation logic.
-
-### Integration Testing
-Include this service in your test environments to provide consistent JWT tokens.
-
-### Local Development
-Run locally to avoid dependencies on external authentication services during development.
-
 ## Project Structure
 
 ```
@@ -249,4 +251,8 @@ Run locally to avoid dependencies on external authentication services during dev
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is provided "as is" without warranty of any kind, express or implied. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
