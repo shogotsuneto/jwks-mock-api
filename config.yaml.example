@@ -1,0 +1,19 @@
+# JWKS Mock API Configuration
+# This file shows all available configuration options
+# All settings can be overridden with environment variables
+
+server:
+  port: 3000
+  host: "0.0.0.0"
+
+jwt:
+  issuer: "http://localhost:3000"
+  audience: "dev-api"
+
+keys:
+  count: 2
+  key_ids:
+    - "dev-key-1"
+    - "dev-key-2"
+
+log_level: "info"  # debug, info, warn, error
