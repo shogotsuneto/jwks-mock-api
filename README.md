@@ -153,6 +153,4 @@ make fmt && make vet       # Format and vet
 
 ## License
 
-This project is provided "as is" without warranty of any kind. Permission is granted to use, copy, modify, and distribute this software freely, subject to including this notice in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
