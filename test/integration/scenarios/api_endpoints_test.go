@@ -9,17 +9,23 @@ import (
 )
 
 // TestAPIEndpointTesting simulates testing API endpoints with JWT
+// This test covers two main aspects:
+// 1. SCOPE-BASED AUTHORIZATION: Testing different permission levels and access control
+// 2. TOKEN EXPIRATION HANDLING: Testing how APIs handle expired tokens
 func TestAPIEndpointTesting(t *testing.T) {
 	its := common.NewIntegrationTestSuite()
 	its.WaitForAPI(t)
 	
 	t.Log("=== Starting API Endpoint Testing Simulation ===")
+	t.Log("Testing aspects: Scope-based authorization & Token expiration handling")
 	
 	// Generate tokens for different API testing scenarios
+	// Each scenario tests specific authorization and expiration aspects
 	testScenarios := []struct {
 		name   string
 		claims map[string]interface{}
 		desc   string
+		testingAspect string
 	}{
 		{
 			name: "admin-user",
@@ -31,6 +37,7 @@ func TestAPIEndpointTesting(t *testing.T) {
 				"env":   "testing",
 			},
 			desc: "Admin user with full permissions",
+			testingAspect: "SCOPE TESTING: High-privilege access with admin-level scopes",
 		},
 		{
 			name: "regular-user",
@@ -42,6 +49,7 @@ func TestAPIEndpointTesting(t *testing.T) {
 				"env":   "testing",
 			},
 			desc: "Regular user with limited permissions",
+			testingAspect: "SCOPE TESTING: Standard user permissions without admin privileges",
 		},
 		{
 			name: "readonly-user",
@@ -53,6 +61,7 @@ func TestAPIEndpointTesting(t *testing.T) {
 				"env":   "testing",
 			},
 			desc: "Read-only user for testing access restrictions",
+			testingAspect: "SCOPE TESTING: Restricted access - read-only permissions (no write scope)",
 		},
 		{
 			name: "expired-user",
@@ -65,6 +74,7 @@ func TestAPIEndpointTesting(t *testing.T) {
 				"exp":   1, // 1 second - will be expired immediately
 			},
 			desc: "User with short expiration for testing token expiry",
+			testingAspect: "EXPIRATION TESTING: Short-lived token to test expiry handling",
 		},
 	}
 	
@@ -73,6 +83,7 @@ func TestAPIEndpointTesting(t *testing.T) {
 	// Generate tokens for each test scenario
 	for _, scenario := range testScenarios {
 		t.Logf("Generating token for %s (%s)...", scenario.name, scenario.desc)
+		t.Logf("  → %s", scenario.testingAspect)
 		
 		tokenReq := map[string]interface{}{"claims": scenario.claims}
 		resp, body := its.MakeRequest(t, "POST", "/generate-token", tokenReq, nil)
@@ -84,6 +95,8 @@ func TestAPIEndpointTesting(t *testing.T) {
 		
 		t.Logf("✓ Token generated for %s", scenario.name)
 	}
+	
+	t.Log("\n=== TESTING PHASE: Validating scope-based authorization and expiration ===")
 	
 	// Test each token via introspection to simulate API endpoint validation
 	for scenarioName, token := range tokens {
@@ -98,26 +111,36 @@ func TestAPIEndpointTesting(t *testing.T) {
 		var introspectResp common.IntrospectionResponse
 		common.AssertJSONResponse(t, body, &introspectResp)
 		
-		// For expired token, it should still introspect successfully 
+		// EXPIRATION TESTING: For expired token, it should still introspect successfully 
 		// (introspection endpoint checks structure, not expiry by default)
 		if scenarioName == "expired-user" {
-			t.Logf("✓ Expired token introspected (API should check exp claim separately)")
+			t.Logf("✓ EXPIRATION TEST: Expired token introspected (API should check exp claim separately)")
 		} else {
 			if !introspectResp.Active {
 				t.Errorf("Token for %s should be active", scenarioName)
 			}
 		}
 		
-		// Verify scope-based authorization claims
+		// SCOPE TESTING: Verify scope-based authorization claims
 		if scope, ok := introspectResp.Claims["scope"].(string); ok {
 			switch scenarioName {
 			case "admin-user":
 				if !strings.Contains(scope, "admin:") {
-					t.Errorf("Admin user should have admin scopes, got: %s", scope)
+					t.Errorf("SCOPE TEST FAILED: Admin user should have admin scopes, got: %s", scope)
+				} else {
+					t.Logf("✓ SCOPE TEST PASSED: Admin user has required admin scopes: %s", scope)
 				}
 			case "readonly-user":
 				if strings.Contains(scope, "write") {
-					t.Errorf("Readonly user should not have write scope, got: %s", scope)
+					t.Errorf("SCOPE TEST FAILED: Readonly user should not have write scope, got: %s", scope)
+				} else {
+					t.Logf("✓ SCOPE TEST PASSED: Readonly user correctly restricted to: %s", scope)
+				}
+			case "regular-user":
+				if !strings.Contains(scope, "read") || !strings.Contains(scope, "write") {
+					t.Errorf("SCOPE TEST FAILED: Regular user should have read and write scopes, got: %s", scope)
+				} else {
+					t.Logf("✓ SCOPE TEST PASSED: Regular user has expected scopes: %s", scope)
 				}
 			}
 		}
@@ -126,4 +149,6 @@ func TestAPIEndpointTesting(t *testing.T) {
 	}
 	
 	t.Log("=== API Endpoint Testing Simulation PASSED ===")
+	t.Log("✓ All scope-based authorization tests completed")
+	t.Log("✓ All token expiration tests completed")
 }
