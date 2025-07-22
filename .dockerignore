@@ -1,12 +1,10 @@
-# Exclude vendor directory to avoid cross-architecture issues
-vendor/
-
 # Exclude git and other development files
 .git/
 .gitignore
 
-# Exclude test files not needed for build
+# Exclude test files not needed for main build (but allow integration tests)
 test/
+!test/integration/
 
 # Exclude build artifacts
 *.exe
