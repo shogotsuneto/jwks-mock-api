@@ -2,14 +2,14 @@
 FROM golang:1.23-alpine AS test-builder
 
 # Install dependencies for integration tests
-RUN apk add --no-cache curl wget jq
+RUN apk add --no-cache curl wget jq git
 
 WORKDIR /app
 
 # Copy only the integration test directory
 COPY test/integration/ ./
 
-# Download dependencies for integration tests
+# Download dependencies
 RUN go mod download
 RUN go mod verify
 

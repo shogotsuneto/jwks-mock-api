@@ -1,6 +1,9 @@
 # Build stage
 FROM golang:1.23-alpine AS builder
 
+# Install git for dependency downloads
+RUN apk add --no-cache git
+
 # Create appuser
 RUN adduser -D -g '' appuser
 
