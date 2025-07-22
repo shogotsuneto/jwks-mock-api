@@ -22,16 +22,19 @@ func TestCORS(t *testing.T) {
 	
 	// Verify CORS headers
 	if resp.Header.Get("Access-Control-Allow-Origin") == "" {
-		t.Error("Expected Access-Control-Allow-Origin header")
+		t.Fatal("Expected Access-Control-Allow-Origin header")
 	}
+	t.Log("✓ Access-Control-Allow-Origin header present")
 	
 	if resp.Header.Get("Access-Control-Allow-Methods") == "" {
-		t.Error("Expected Access-Control-Allow-Methods header")
+		t.Fatal("Expected Access-Control-Allow-Methods header")
 	}
+	t.Log("✓ Access-Control-Allow-Methods header present")
 	
 	if resp.Header.Get("Access-Control-Allow-Headers") == "" {
-		t.Error("Expected Access-Control-Allow-Headers header")
+		t.Fatal("Expected Access-Control-Allow-Headers header")
 	}
+	t.Log("✓ Access-Control-Allow-Headers header present")
 	
 	t.Log("CORS test passed")
 }

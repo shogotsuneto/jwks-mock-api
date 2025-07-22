@@ -75,7 +75,7 @@ func TestMicroservicesWorkflow(t *testing.T) {
 		
 		var tokenResp common.TokenResponse
 		common.AssertJSONResponse(t, body, &tokenResp)
-		tokens[service.name] = tokenResp.Token
+		tokens[service.name] = tokenResp.AccessToken
 		
 		t.Logf("✓ Token generated for %s", service.name)
 	}

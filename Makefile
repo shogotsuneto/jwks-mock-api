@@ -37,9 +37,22 @@ test-coverage:
 
 # Run Docker-based integration tests
 test-integration:
-	@echo "Running Docker integration tests..."
-	@docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from integration-tests
-	@docker compose -f docker-compose.test.yml down
+	@echo "🚀 Starting Docker Integration Tests..."
+	@echo "======================================="
+	@docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from integration-tests; \
+	EXIT_CODE=$$?; \
+	docker compose -f docker-compose.test.yml down; \
+	echo ""; \
+	echo "======================================="; \
+	if [ $$EXIT_CODE -eq 0 ]; then \
+		echo "🎉 Integration tests completed successfully!"; \
+		echo "✅ All tests passed"; \
+	else \
+		echo "💥 Integration tests failed!"; \
+		echo "❌ Some tests failed - check output above"; \
+	fi; \
+	echo "======================================="; \
+	exit $$EXIT_CODE
 
 # Run integration tests with external Docker setup (for local development)
 test-integration-external:

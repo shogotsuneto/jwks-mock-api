@@ -18,9 +18,13 @@ type IntegrationTestSuite struct {
 
 // TokenResponse represents the response from token generation endpoint
 type TokenResponse struct {
-	Token   string `json:"token"`
-	KeyID   string `json:"key_id"`
-	TokenID string `json:"token_id"`
+	AccessToken string                 `json:"access_token"`
+	ExpiresIn   int                    `json:"expires_in"`
+	KeyID       string                 `json:"key_id"`
+	RawRequest  map[string]interface{} `json:"raw_request"`
+	
+	// Computed field for backward compatibility
+	Token string `json:"-"`
 }
 
 // IntrospectionResponse represents the response from token introspection endpoint
@@ -37,8 +41,9 @@ type IntrospectionResponse struct {
 
 // HealthResponse represents the response from health endpoint
 type HealthResponse struct {
-	Status string `json:"status"`
-	Time   string `json:"time"`
+	Status        string   `json:"status"`
+	Service       string   `json:"service"`
+	AvailableKeys []string `json:"available_keys"`
 }
 
 // JWKSResponse represents the response from JWKS endpoint

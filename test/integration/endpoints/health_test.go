@@ -24,9 +24,13 @@ func TestHealth(t *testing.T) {
 	if healthResp.Status != "ok" {
 		t.Errorf("Expected status 'ok', got %s", healthResp.Status)
 	}
-	
-	if healthResp.Time == "" {
-		t.Error("Expected 'time' field in health response")
+
+	if healthResp.Service == "" {
+		t.Error("Expected 'service' field in health response")
+	}
+
+	if len(healthResp.AvailableKeys) == 0 {
+		t.Error("Expected 'available_keys' field with keys in health response")
 	}
 	
 	t.Logf("Health check passed: %s", string(body))

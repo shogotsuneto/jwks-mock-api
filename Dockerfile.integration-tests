@@ -17,4 +17,4 @@ RUN go mod verify
 RUN mkdir -p /app/results
 
 # Run integration tests by default
-CMD ["go", "test", "-v", "./..."]
+CMD ["go", "test", "-v", "-count=1", "./..."]

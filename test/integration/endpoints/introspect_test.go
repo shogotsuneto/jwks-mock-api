@@ -32,7 +32,7 @@ func TestIntrospection(t *testing.T) {
 	
 	// Test introspection with form data
 	formData := url.Values{
-		"token": {tokenResp.Token},
+		"token": {tokenResp.AccessToken},
 	}
 	
 	headers := map[string]string{

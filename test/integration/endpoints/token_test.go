@@ -32,19 +32,19 @@ func TestTokenGeneration(t *testing.T) {
 	
 	var tokenResp common.TokenResponse
 	common.AssertJSONResponse(t, body, &tokenResp)
-	
-	if tokenResp.Token == "" {
-		t.Fatal("Expected 'token' field in response")
+
+	if tokenResp.AccessToken == "" {
+		t.Fatal("Expected 'access_token' field in response")
 	}
-	
+
 	// Verify token structure (should have 3 parts separated by dots)
-	parts := strings.Split(tokenResp.Token, ".")
+	parts := strings.Split(tokenResp.AccessToken, ".")
 	if len(parts) != 3 {
 		t.Errorf("Expected JWT with 3 parts, got %d", len(parts))
 	}
-	
+
 	// Parse and validate JWT
-	token := common.AssertValidJWT(t, tokenResp.Token)
+	token := common.AssertValidJWT(t, tokenResp.AccessToken)
 	
 	// Verify custom claims
 	expectedClaims := map[string]interface{}{
@@ -52,5 +52,5 @@ func TestTokenGeneration(t *testing.T) {
 	}
 	common.AssertJWTClaims(t, token, expectedClaims)
 	
-	t.Logf("Token generation test passed, token length: %d", len(tokenResp.Token))
+	t.Logf("Token generation test passed, token length: %d", len(tokenResp.AccessToken))
 }

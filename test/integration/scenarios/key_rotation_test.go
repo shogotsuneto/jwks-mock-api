@@ -48,12 +48,12 @@ func TestKeyRotationSimulation(t *testing.T) {
 		common.AssertJSONResponse(t, body, &tokenResp)
 		
 		// Parse token to extract key ID
-		parsedToken := common.AssertValidJWT(t, tokenResp.Token)
+		parsedToken := common.AssertValidJWT(t, tokenResp.AccessToken)
 		
 		keyID := parsedToken.Header["kid"].(string)
 		
 		tokenResults[i] = map[string]interface{}{
-			"token":  tokenResp.Token,
+			"token":  tokenResp.AccessToken,
 			"key_id": keyID,
 			"index":  i,
 		}
