@@ -60,7 +60,7 @@ Run with: `./jwks-mock-api -config config.yaml`
 
 ## Dynamic Claims Support
 
-**The `/generate-token` endpoint accepts any JSON structure as claims.** All fields (except `expiresIn`) become claims in the JWT payload, enabling flexible token generation for various testing scenarios.
+**The `/generate-token` endpoint accepts a structured request with claims nested under a `claims` key.** This separates configuration options (like `expiresIn`) from actual JWT claims, enabling flexible token generation for various testing scenarios.
 
 ### Examples
 
@@ -68,7 +68,7 @@ Run with: `./jwks-mock-api -config config.yaml`
 ```bash
 curl -X POST http://localhost:3000/generate-token \
   -H "Content-Type: application/json" \
-  -d '{"sub": "user123", "role": "admin"}'
+  -d '{"claims": {"sub": "user123", "role": "admin"}}'
 ```
 
 **Complex Claims:**
@@ -76,18 +76,20 @@ curl -X POST http://localhost:3000/generate-token \
 curl -X POST http://localhost:3000/generate-token \
   -H "Content-Type: application/json" \
   -d '{
-    "sub": "user123",
-    "profile": {
-      "name": "John Doe",
-      "email": "john@example.com",
-      "department": "Engineering"
+    "claims": {
+      "sub": "user123",
+      "profile": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "department": "Engineering"
+      },
+      "permissions": ["read", "write", "admin"],
+      "metadata": {
+        "loginCount": 42,
+        "lastLogin": "2024-01-15T10:30:00Z"
+      }
     },
-    "permissions": ["read", "write", "admin"],
-    "metadata": {
-      "loginCount": 42,
-      "lastLogin": "2024-01-15T10:30:00Z"
-    },
-    "expiresIn": "1h"
+    "expiresIn": 3600
   }'
 ```
 
@@ -95,12 +97,12 @@ curl -X POST http://localhost:3000/generate-token \
 ```json
 {
   "access_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtleS0xIiwidHlwIjoiSldUIn0...",
-  "expires_in": "1h",
+  "expires_in": "3600",
   "key_id": "key-1"
 }
 ```
 
-> **Note:** Standard JWT fields (`iat`, `exp`, `iss`, `aud`) are automatically added. The `expiresIn` field controls token expiration and is not included as a claim.
+> **Note:** Standard JWT fields (`iat`, `exp`, `iss`, `aud`) are automatically added. The `expiresIn` field (in seconds) controls token expiration and is not included as a claim.
 
 ### Other Examples
 
