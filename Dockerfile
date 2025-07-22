@@ -1,6 +1,9 @@
 # Build stage
 FROM golang:1.23-alpine AS builder
 
+# Install ca-certificates for TLS
+RUN apk --no-cache add ca-certificates
+
 # Create appuser
 RUN adduser -D -g '' appuser
 
@@ -10,6 +13,8 @@ WORKDIR /build
 COPY go.mod go.sum ./
 
 # Download dependencies
+ENV GOPROXY=direct
+ENV GOSUMDB=off
 RUN go mod download
 RUN go mod verify
 

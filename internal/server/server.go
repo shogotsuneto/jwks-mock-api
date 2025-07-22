@@ -95,18 +95,18 @@ func (s *Server) setupRoutes() *mux.Router {
 	router.Use(s.handler.CORS)
 
 	// JWKS endpoint
-	router.HandleFunc("/.well-known/jwks.json", s.handler.JWKS).Methods("GET")
+	router.HandleFunc("/.well-known/jwks.json", s.handler.JWKS).Methods("GET", "OPTIONS")
 
 	// Token generation endpoints
-	router.HandleFunc("/generate-token", s.handler.GenerateToken).Methods("POST")
-	router.HandleFunc("/generate-invalid-token", s.handler.GenerateInvalidToken).Methods("POST")
+	router.HandleFunc("/generate-token", s.handler.GenerateToken).Methods("POST", "OPTIONS")
+	router.HandleFunc("/generate-invalid-token", s.handler.GenerateInvalidToken).Methods("POST", "OPTIONS")
 
 	// Token introspection endpoint (OAuth 2.0 RFC 7662)
-	router.HandleFunc("/introspect", s.handler.Introspect).Methods("POST")
+	router.HandleFunc("/introspect", s.handler.Introspect).Methods("POST", "OPTIONS")
 
 	// Health and info endpoints
-	router.HandleFunc("/health", s.handler.Health).Methods("GET")
-	router.HandleFunc("/keys", s.handler.Keys).Methods("GET")
+	router.HandleFunc("/health", s.handler.Health).Methods("GET", "OPTIONS")
+	router.HandleFunc("/keys", s.handler.Keys).Methods("GET", "OPTIONS")
 
 	return router
 }

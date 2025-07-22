@@ -1,8 +1,8 @@
 # Build stage for integration tests
 FROM golang:1.23-alpine AS test-builder
 
-# Install minimal dependencies for integration tests (curl for debugging if needed)
-RUN apk add --no-cache curl
+# Install ca-certificates for TLS and minimal dependencies for integration tests 
+RUN apk add --no-cache ca-certificates curl
 
 WORKDIR /app
 
@@ -10,6 +10,8 @@ WORKDIR /app
 COPY test/integration/ ./
 
 # Download dependencies
+ENV GOPROXY=direct
+ENV GOSUMDB=off
 RUN go mod download
 RUN go mod verify
 
