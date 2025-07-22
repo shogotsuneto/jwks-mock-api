@@ -123,7 +123,8 @@ make build                    # Standard build
 make build-optimized         # Smaller binary
 
 # Test  
-make test                    # Run tests
+make test-integration       # Docker-based integration tests
+make test-integration-external  # Integration tests with external server
 make test-coverage          # With coverage
 
 # Docker
@@ -133,6 +134,17 @@ make docker-run            # Run container
 # Code quality
 make fmt && make vet       # Format and vet
 ```
+
+### Integration Testing
+
+The project includes comprehensive Docker-based integration tests that validate real API endpoints in containerized environments. These tests cover:
+
+- **Endpoint Testing**: All API endpoints with real HTTP requests
+- **JWT Workflows**: Complete token generation, validation, and introspection
+- **Microservices Scenarios**: Service-to-service authentication patterns
+- **Key Rotation**: Multiple key usage simulation
+
+See `test/integration/README.md` for detailed testing documentation.
 
 ## Project Structure
 
