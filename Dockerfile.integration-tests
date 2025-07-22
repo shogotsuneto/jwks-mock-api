@@ -1,16 +1,21 @@
 # Build stage for integration tests
-FROM golang:1.23 AS test-builder
+FROM golang:1.23-alpine AS test-builder
 
-# Install ca-certificates for TLS
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+# Install ca-certificates and git
+RUN apk --no-cache add ca-certificates git
 
 WORKDIR /app
 
 # Copy only the integration test directory
 COPY test/integration/ ./
 
+# DO NOT use vendor mode - always download dependencies fresh
+# This ensures cross-platform compatibility and avoids stale dependencies
+# Download dependencies
+RUN go mod download
+
 # Create test results directory
 RUN mkdir -p /app/results
 
-# Run integration tests by default using vendor mode
-CMD ["go", "test", "-mod=vendor", "-v", "-count=1", "./..."]
+# Run integration tests by default
+CMD ["go", "test", "-v", "-count=1", "./..."]

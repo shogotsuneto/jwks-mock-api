@@ -1,26 +1,29 @@
 # Build stage
-FROM golang:1.23-bullseye AS builder
+FROM golang:1.23-alpine AS builder
 
-# Update ca-certificates
-RUN apt-get update && apt-get install -y ca-certificates git && rm -rf /var/lib/apt/lists/*
+# Install ca-certificates and git
+RUN apk --no-cache add ca-certificates git
 
 # Create appuser
-RUN adduser --disabled-password --gecos '' appuser
+RUN adduser -D -g '' appuser
 
 WORKDIR /build
 
-# Copy go mod files and vendor directory
+# Copy go mod files
 COPY go.mod go.sum ./
-COPY vendor/ vendor/
 
-# Copy source code (excluding vendor directory via .dockerignore)
+# DO NOT copy vendor directory - always download dependencies fresh
+# This ensures cross-platform compatibility and avoids stale dependencies
+# Download dependencies
+RUN go mod download
+
+# Copy source code
 COPY cmd/ cmd/
 COPY internal/ internal/
 COPY pkg/ pkg/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-    -mod=vendor \
     -ldflags='-w -s -extldflags "-static"' \
     -a -installsuffix cgo \
     -o jwks-mock-api \
