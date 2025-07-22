@@ -14,7 +14,7 @@ services:
       - KEY_COUNT=3
       - KEY_IDS=integration-key-1,integration-key-2,integration-key-3
     healthcheck:
-      test: ["CMD", "sh", "-c", "timeout 1 bash -c '</dev/tcp/localhost/3000' || exit 1"]
+      test: ["CMD", "nc", "-z", "localhost", "3000"]
       interval: 5s
       timeout: 3s
       retries: 5
