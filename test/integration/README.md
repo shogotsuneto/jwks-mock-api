@@ -5,7 +5,7 @@ This directory contains Docker-based integration tests that run against real API
 ## What's Different from Unit Tests
 
 - **Unit Tests** (`pkg/handlers/*_test.go`): Use in-memory `httptest.Server`, fast execution, isolated testing
-- **Integration Tests** (`test/integration/*_test.go`): Use real Docker containers, actual HTTP requests, production-like environment
+- **Integration Tests** (`test/integration/*_test.go`): Use real Docker containers, actual HTTP requests, container-like environment
 
 ## Test Structure
 
@@ -47,17 +47,7 @@ make test-integration-external
 # 3. Clean up server container
 ```
 
-### Option 3: Manual Setup
-```bash
-# Terminal 1: Start the server
-docker-compose -f docker-compose.test.yml up jwks-api
 
-# Terminal 2: Run tests
-JWKS_API_URL=http://localhost:3001 go test -v ./test/integration/...
-
-# Terminal 1: Clean up
-docker-compose -f docker-compose.test.yml down
-```
 
 ## Environment Variables
 
@@ -95,7 +85,7 @@ integration_tests:
 
 1. **Real Environment**: Tests actual containerized deployment
 2. **Network Testing**: Validates container networking and communication
-3. **Production Parity**: Matches production Docker environment
+3. **Container Parity**: Matches containerized environment
 4. **State Persistence**: Ready for testing future persistence features
 5. **Load Testing**: Tests under realistic conditions
 6. **Debugging**: Can inspect running containers and logs

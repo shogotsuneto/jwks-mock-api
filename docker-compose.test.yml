@@ -40,22 +40,7 @@ services:
       - test-network
     command: ["go", "test", "-v", "./test/integration/..."]
 
-  # Alternative test setup for external testing
-  jwks-api-external:
-    build: .
-    ports:
-      - "3002:3000"
-    environment:
-      - PORT=3000
-      - HOST=0.0.0.0
-      - JWT_ISSUER=http://localhost:3002
-      - JWT_AUDIENCE=external-test-api
-      - KEY_COUNT=2
-      - KEY_IDS=external-key-1,external-key-2
-    profiles:
-      - external-test
-    networks:
-      - test-network
+
 
 networks:
   test-network:

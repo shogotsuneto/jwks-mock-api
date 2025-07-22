@@ -33,10 +33,7 @@ test-coverage:
 	@echo "Running tests with coverage..."
 	@go test -cover ./...
 
-# Run unit tests only (existing test suite)
-test-unit:
-	@echo "Running unit tests..."
-	@go test ./pkg/... ./internal/...
+
 
 # Run Docker-based integration tests
 test-integration:
@@ -47,18 +44,17 @@ test-integration:
 # Run integration tests with external Docker setup (for local development)
 test-integration-external:
 	@echo "Starting JWKS API server for external testing..."
-	@docker compose -f docker-compose.test.yml --profile external-test up -d jwks-api-external
+	@docker compose -f docker-compose.test.yml up -d jwks-api
 	@echo "Waiting for server to be ready..."
 	@sleep 10
 	@echo "Running integration tests against external server..."
-	@JWKS_API_URL=http://localhost:3002 go test -v ./test/integration/...
+	@JWKS_API_URL=http://localhost:3001 go test -v ./test/integration/...
 	@echo "Cleaning up external test server..."
-	@docker compose -f docker-compose.test.yml --profile external-test down
+	@docker compose -f docker-compose.test.yml down
 
-# Run all tests (unit + integration)
+# Run all tests (integration only)
 test-all:
 	@echo "Running all tests..."
-	@$(MAKE) test-unit
 	@$(MAKE) test-integration
 
 # Generate coverage for integration tests
@@ -122,11 +118,10 @@ help:
 	@echo "  run             - Run the application"
 	@echo "  run-config      - Run with example config file"
 	@echo "  test            - Run basic tests"
-	@echo "  test-unit       - Run unit tests only"
 	@echo "  test-coverage   - Run tests with coverage"
 	@echo "  test-integration- Run Docker-based integration tests"
 	@echo "  test-integration-external - Run integration tests against external Docker server"
-	@echo "  test-all        - Run all tests (unit + integration)"
+	@echo "  test-all        - Run all tests (integration only)"
 	@echo "  clean           - Clean build artifacts"
 	@echo "  docker          - Build Docker image"
 	@echo "  docker-run      - Run Docker container"
