@@ -45,7 +45,7 @@ func TestCompleteJWTWorkflow(t *testing.T) {
 	
 	var tokenResp common.TokenResponse
 	common.AssertJSONResponse(t, body, &tokenResp)
-	t.Logf("✓ Token generated successfully (length: %d)", len(tokenResp.AccessToken))
+	t.Logf("✓ Token generated successfully (length: %d)", len(tokenResp.Token))
 	
 	// Step 2: Fetch JWKS to simulate how a service would validate the token
 	t.Log("Step 2: Fetching JWKS for token validation...")
@@ -58,7 +58,7 @@ func TestCompleteJWTWorkflow(t *testing.T) {
 	
 	// Step 3: Parse token to verify structure (simulating what a service would do)
 	t.Log("Step 3: Parsing and validating token structure...")
-	parsedToken := common.AssertValidJWT(t, tokenResp.AccessToken)
+	parsedToken := common.AssertValidJWT(t, tokenResp.Token)
 	
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	if !ok {
@@ -92,7 +92,7 @@ func TestCompleteJWTWorkflow(t *testing.T) {
 	
 	// Step 4: Use token introspection endpoint
 	t.Log("Step 4: Performing token introspection...")
-	formData := url.Values{"token": {tokenResp.AccessToken}}
+	formData := url.Values{"token": {tokenResp.Token}}
 	headers := map[string]string{"Content-Type": "application/x-www-form-urlencoded"}
 	
 	resp, body = its.MakeRequest(t, "POST", "/introspect", formData, headers)

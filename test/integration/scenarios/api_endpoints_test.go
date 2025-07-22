@@ -96,7 +96,7 @@ func TestAPIEndpointTesting(t *testing.T) {
 		
 		var tokenResp common.TokenResponse
 		common.AssertJSONResponse(t, body, &tokenResp)
-		tokens[scenario.name] = tokenResp.AccessToken
+		tokens[scenario.name] = tokenResp.Token
 		
 		t.Logf("✓ Token generated for %s", scenario.name)
 	}

@@ -30,10 +30,10 @@ func New(cfg *config.Config, keyManager *keys.Manager) *Handler {
 
 // TokenResponse represents a token generation response
 type TokenResponse struct {
-	AccessToken string                 `json:"access_token"`
-	ExpiresIn   int                    `json:"expires_in"`
-	KeyID       string                 `json:"key_id"`
-	RawRequest  map[string]interface{} `json:"raw_request"`
+	Token      string                 `json:"token"`
+	ExpiresIn  int                    `json:"expires_in"`
+	KeyID      string                 `json:"key_id"`
+	RawRequest map[string]interface{} `json:"raw_request"`
 }
 
 // IntrospectionResponse represents an OAuth 2.0 token introspection response (RFC 7662)
@@ -212,10 +212,10 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := TokenResponse{
-		AccessToken: tokenString,
-		ExpiresIn:   expiresInSeconds,
-		KeyID:       keyPair.Kid,
-		RawRequest:  claims, // Include all the dynamic request claims
+		Token:      tokenString,
+		ExpiresIn:  expiresInSeconds,
+		KeyID:      keyPair.Kid,
+		RawRequest: claims, // Include all the dynamic request claims
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -388,10 +388,10 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := TokenResponse{
-		AccessToken: tokenString,
-		ExpiresIn:   expiresInSeconds,
-		KeyID:       validKey.Kid,
-		RawRequest:  claims, // Include all the dynamic request claims
+		Token:      tokenString,
+		ExpiresIn:  expiresInSeconds,
+		KeyID:      validKey.Kid,
+		RawRequest: claims, // Include all the dynamic request claims
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -18,13 +18,10 @@ type IntegrationTestSuite struct {
 
 // TokenResponse represents the response from token generation endpoint
 type TokenResponse struct {
-	AccessToken string                 `json:"access_token"`
-	ExpiresIn   int                    `json:"expires_in"`
-	KeyID       string                 `json:"key_id"`
-	RawRequest  map[string]interface{} `json:"raw_request"`
-	
-	// Computed field for backward compatibility
-	Token string `json:"-"`
+	Token      string                 `json:"token"`
+	ExpiresIn  int                    `json:"expires_in"`
+	KeyID      string                 `json:"key_id"`
+	RawRequest map[string]interface{} `json:"raw_request"`
 }
 
 // IntrospectionResponse represents the response from token introspection endpoint

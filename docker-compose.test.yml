@@ -33,6 +33,7 @@ services:
     environment:
       - JWKS_API_URL=http://jwks-api:3000
       - TEST_TIMEOUT=30s
+    tty: true
     networks:
       - test-network
 
