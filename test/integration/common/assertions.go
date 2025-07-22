@@ -14,7 +14,7 @@ func AssertJSONResponse(t *testing.T, body []byte, target interface{}) {
 	t.Helper()
 	
 	if err := json.Unmarshal(body, target); err != nil {
-		t.Fatalf("Failed to unmarshal JSON response: %v\nResponse body: %s", err, string(body))
+		t.Fatalf("❌ JSON PARSE FAILED: %v\nResponse body: %s", err, string(body))
 	}
 }
 
@@ -24,7 +24,7 @@ func AssertValidJWT(t *testing.T, tokenStr string) *jwt.Token {
 	
 	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
 	if err != nil {
-		t.Fatalf("Failed to parse JWT token: %v", err)
+		t.Fatalf("❌ JWT PARSE FAILED: %v", err)
 	}
 	
 	return token
@@ -36,13 +36,13 @@ func AssertJWTClaims(t *testing.T, token *jwt.Token, expectedClaims map[string]i
 	
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		t.Fatal("Failed to get JWT claims")
+		t.Fatal("❌ JWT CLAIMS EXTRACTION FAILED: Failed to get JWT claims")
 	}
 	
 	for key, expectedValue := range expectedClaims {
 		actualValue, exists := claims[key]
 		if !exists {
-			t.Errorf("Expected claim '%s' not found in token", key)
+			t.Errorf("❌ JWT CLAIM MISSING: Expected claim '%s' not found in token", key)
 			continue
 		}
 		
@@ -50,27 +50,27 @@ func AssertJWTClaims(t *testing.T, token *jwt.Token, expectedClaims map[string]i
 		switch expected := expectedValue.(type) {
 		case string:
 			if actual, ok := actualValue.(string); !ok || actual != expected {
-				t.Errorf("Expected claim '%s' to be '%v', got '%v'", key, expected, actualValue)
+				t.Errorf("❌ JWT CLAIM MISMATCH: Expected claim '%s' to be '%v', got '%v'", key, expected, actualValue)
 			}
 		case float64:
 			if actual, ok := actualValue.(float64); !ok || actual != expected {
-				t.Errorf("Expected claim '%s' to be '%v', got '%v'", key, expected, actualValue)
+				t.Errorf("❌ JWT CLAIM MISMATCH: Expected claim '%s' to be '%v', got '%v'", key, expected, actualValue)
 			}
 		case []interface{}:
 			actualSlice, ok := actualValue.([]interface{})
 			if !ok {
-				t.Errorf("Expected claim '%s' to be a slice, got %T", key, actualValue)
+				t.Errorf("❌ JWT CLAIM TYPE ERROR: Expected claim '%s' to be a slice, got %T", key, actualValue)
 				continue
 			}
 			if len(actualSlice) != len(expected) {
-				t.Errorf("Expected claim '%s' to have %d items, got %d", key, len(expected), len(actualSlice))
+				t.Errorf("❌ JWT CLAIM SIZE MISMATCH: Expected claim '%s' to have %d items, got %d", key, len(expected), len(actualSlice))
 				continue
 			}
 			// Note: This is a basic comparison, could be enhanced for complex types
 		default:
 			// Generic comparison for other types
 			if actualValue != expectedValue {
-				t.Errorf("Expected claim '%s' to be '%v', got '%v'", key, expectedValue, actualValue)
+				t.Errorf("❌ JWT CLAIM MISMATCH: Expected claim '%s' to be '%v', got '%v'", key, expectedValue, actualValue)
 			}
 		}
 	}
@@ -81,27 +81,27 @@ func AssertValidJWKS(t *testing.T, jwks *JWKSResponse) {
 	t.Helper()
 	
 	if len(jwks.Keys) == 0 {
-		t.Fatal("JWKS response contains no keys")
+		t.Fatal("❌ JWKS VALIDATION FAILED: JWKS response contains no keys")
 	}
 	
 	for i, key := range jwks.Keys {
 		if key.Kty == "" {
-			t.Errorf("Key %d missing kty (key type)", i)
+			t.Errorf("❌ JWKS VALIDATION FAILED: Key %d missing kty (key type)", i)
 		}
 		if key.Use == "" {
-			t.Errorf("Key %d missing use", i)
+			t.Errorf("❌ JWKS VALIDATION FAILED: Key %d missing use", i)
 		}
 		if key.KeyID == "" {
-			t.Errorf("Key %d missing kid (key ID)", i)
+			t.Errorf("❌ JWKS VALIDATION FAILED: Key %d missing kid (key ID)", i)
 		}
 		if key.Alg == "" {
-			t.Errorf("Key %d missing alg (algorithm)", i)
+			t.Errorf("❌ JWKS VALIDATION FAILED: Key %d missing alg (algorithm)", i)
 		}
 		if key.N == "" {
-			t.Errorf("Key %d missing n (modulus)", i)
+			t.Errorf("❌ JWKS VALIDATION FAILED: Key %d missing n (modulus)", i)
 		}
 		if key.E == "" {
-			t.Errorf("Key %d missing e (exponent)", i)
+			t.Errorf("❌ JWKS VALIDATION FAILED: Key %d missing e (exponent)", i)
 		}
 	}
 }
@@ -135,7 +135,7 @@ func AssertStatusCode(t *testing.T, resp *http.Response, expectedCode int) {
 	t.Helper()
 	
 	if resp.StatusCode != expectedCode {
-		t.Errorf("Expected status code %d, got %d", expectedCode, resp.StatusCode)
+		t.Errorf("❌ HTTP STATUS MISMATCH: Expected status code %d, got %d", expectedCode, resp.StatusCode)
 	}
 }
 
@@ -145,6 +145,6 @@ func AssertContentType(t *testing.T, resp *http.Response, expectedType string) {
 	
 	actualType := resp.Header.Get("Content-Type")
 	if !strings.Contains(actualType, expectedType) {
-		t.Errorf("Expected content type to contain '%s', got '%s'", expectedType, actualType)
+		t.Errorf("❌ CONTENT TYPE MISMATCH: Expected content type to contain '%s', got '%s'", expectedType, actualType)
 	}
 }

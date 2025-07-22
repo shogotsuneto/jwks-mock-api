@@ -49,12 +49,12 @@ func TestIntrospection(t *testing.T) {
 	
 	// Verify introspection response
 	if !introspectResp.Active {
-		t.Errorf("Expected active=true, got %v", introspectResp.Active)
+		t.Errorf("❌ INTROSPECTION FAILED: Expected active=true, got %v", introspectResp.Active)
 	}
 	
 	if introspectResp.Sub != "introspection-test-user" {
-		t.Errorf("Expected sub 'introspection-test-user', got %s", introspectResp.Sub)
+		t.Errorf("❌ INTROSPECTION FAILED: Expected sub 'introspection-test-user', got %s", introspectResp.Sub)
 	}
 	
-	t.Log("Token introspection test passed")
+	t.Log("✅ Token introspection test passed")
 }

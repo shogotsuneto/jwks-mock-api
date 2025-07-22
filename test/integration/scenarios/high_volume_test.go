@@ -34,7 +34,7 @@ func TestHighVolumeTokenGeneration(t *testing.T) {
 		if resp.StatusCode == 200 {
 			successCount++
 		} else {
-			t.Logf("Token %d failed: %d - %s", i, resp.StatusCode, string(body))
+			t.Logf("❌ Token %d failed: %d - %s", i, resp.StatusCode, string(body))
 		}
 		
 		// Small delay to avoid overwhelming the server
@@ -45,17 +45,16 @@ func TestHighVolumeTokenGeneration(t *testing.T) {
 	
 	duration := time.Since(start)
 	
-	t.Logf("Generated %d/%d tokens successfully in %v", successCount, tokenCount, duration)
-	t.Logf("Rate: %.2f tokens/second", float64(successCount)/duration.Seconds())
-	
 	if successCount < tokenCount {
-		t.Errorf("Expected %d successful tokens, got %d", tokenCount, successCount)
+		t.Errorf("❌ HIGH VOLUME TEST FAILED: Expected %d successful tokens, got %d", tokenCount, successCount)
 	}
 	
 	successRate := float64(successCount) / float64(tokenCount) * 100
 	if successRate < 95.0 {
-		t.Errorf("Success rate too low: %.1f%% (expected > 95%%)", successRate)
+		t.Errorf("❌ HIGH VOLUME TEST FAILED: Success rate too low: %.1f%% (expected > 95%%)", successRate)
 	}
 	
-	t.Log("=== High Volume Token Generation Test PASSED ===")
+	t.Logf("✅ Generated %d/%d tokens successfully in %v (%.2f tokens/second)", 
+		successCount, tokenCount, duration, float64(successCount)/duration.Seconds())
+	t.Log("✅ High Volume Token Generation Test PASSED")
 }

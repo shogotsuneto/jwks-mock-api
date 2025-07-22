@@ -23,5 +23,5 @@ func TestJWKS(t *testing.T) {
 	// Validate JWKS structure using common assertion
 	common.AssertValidJWKS(t, &jwks)
 	
-	t.Logf("JWKS validation passed with %d keys", len(jwks.Keys))
+	t.Logf("✅ JWKS validation passed with %d keys", len(jwks.Keys))
 }

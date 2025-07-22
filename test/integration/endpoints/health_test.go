@@ -22,16 +22,17 @@ func TestHealth(t *testing.T) {
 	
 	// Verify required fields
 	if healthResp.Status != "ok" {
-		t.Errorf("Expected status 'ok', got %s", healthResp.Status)
+		t.Errorf("❌ HEALTH CHECK FAILED: Expected status 'ok', got %s", healthResp.Status)
 	}
 
 	if healthResp.Service == "" {
-		t.Error("Expected 'service' field in health response")
+		t.Error("❌ HEALTH CHECK FAILED: Expected 'service' field in health response")
 	}
 
 	if len(healthResp.AvailableKeys) == 0 {
-		t.Error("Expected 'available_keys' field with keys in health response")
+		t.Error("❌ HEALTH CHECK FAILED: Expected 'available_keys' field with keys in health response")
 	}
 	
-	t.Logf("Health check passed: %s", string(body))
+	// Only log success summary, not full response details
+	t.Log("✅ Health check passed")
 }

@@ -43,18 +43,24 @@ func (its *IntegrationTestSuite) WaitForAPI(t *testing.T) {
 		resp, err := its.HTTPClient.Get(its.APIURL + "/health")
 		if err == nil && resp.StatusCode == http.StatusOK {
 			resp.Body.Close()
-			t.Logf("API is ready after %d attempts", i+1)
+			// Only log on success to reduce noise
+			if i > 0 {
+				t.Logf("✅ API ready after %d attempts", i+1)
+			}
 			return
 		}
 		if resp != nil {
 			resp.Body.Close()
 		}
 		
-		t.Logf("Waiting for API... attempt %d/%d", i+1, maxAttempts)
+		// Only log every 5 attempts to reduce noise, or on first/last attempts
+		if i == 0 || i == maxAttempts-1 || (i+1)%5 == 0 {
+			t.Logf("⏳ Waiting for API... attempt %d/%d", i+1, maxAttempts)
+		}
 		time.Sleep(2 * time.Second)
 	}
 	
-	t.Fatalf("API did not become ready after %d attempts", maxAttempts)
+	t.Fatalf("❌ CRITICAL ERROR: API did not become ready after %d attempts", maxAttempts)
 }
 
 // MakeRequest is a helper to make HTTP requests

@@ -23,8 +23,6 @@ func TestKeyRotationSimulation(t *testing.T) {
 	var jwks common.JWKSResponse
 	common.AssertJSONResponse(t, body, &jwks)
 	
-	t.Logf("Found %d keys in JWKS - simulating key rotation scenario", len(jwks.Keys))
-	
 	if len(jwks.Keys) < 2 {
 		t.Skip("Need at least 2 keys for key rotation simulation")
 	}
@@ -57,8 +55,6 @@ func TestKeyRotationSimulation(t *testing.T) {
 			"key_id": keyID,
 			"index":  i,
 		}
-		
-		t.Logf("Token %d generated with key ID: %s", i, keyID)
 	}
 	
 	// Verify that different keys are being used (at least some variation)
@@ -68,12 +64,8 @@ func TestKeyRotationSimulation(t *testing.T) {
 		keyIDs[keyID]++
 	}
 	
-	t.Logf("Key usage distribution: %v", keyIDs)
-	
 	if len(keyIDs) < 2 {
-		t.Log("Warning: All tokens used the same key - this might be expected for smaller key sets")
-	} else {
-		t.Logf("✓ Key rotation simulation successful - %d different keys used", len(keyIDs))
+		t.Log("⚠️  All tokens used the same key - this might be expected for smaller key sets")
 	}
 	
 	// Validate all tokens via introspection
@@ -91,14 +83,15 @@ func TestKeyRotationSimulation(t *testing.T) {
 		common.AssertJSONResponse(t, body, &introspectResp)
 		
 		if !introspectResp.Active {
-			t.Errorf("Token %d should be active", index)
+			t.Errorf("❌ KEY ROTATION TEST FAILED: Token %d should be active", index)
 		}
 		
 		expectedSub := fmt.Sprintf("rotation-test-user-%d", index)
 		if introspectResp.Sub != expectedSub {
-			t.Errorf("Token %d: expected sub '%s', got '%s'", index, expectedSub, introspectResp.Sub)
+			t.Errorf("❌ KEY ROTATION TEST FAILED: Token %d: expected sub '%s', got '%s'", index, expectedSub, introspectResp.Sub)
 		}
 	}
 	
-	t.Log("=== Key Rotation Simulation Test PASSED ===")
+	t.Logf("✅ Key rotation test passed - %d keys tested, %d different key IDs used", len(jwks.Keys), len(keyIDs))
+	t.Log("✅ Key Rotation Simulation Test PASSED")
 }

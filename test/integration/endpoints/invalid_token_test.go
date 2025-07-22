@@ -32,8 +32,8 @@ func TestInvalidToken(t *testing.T) {
 	
 	// Verify token is marked as inactive
 	if introspectResp.Active {
-		t.Errorf("Expected active=false for invalid token, got %v", introspectResp.Active)
+		t.Errorf("❌ INVALID TOKEN TEST FAILED: Expected active=false for invalid token, got %v", introspectResp.Active)
 	}
 	
-	t.Log("Invalid token test passed")
+	t.Log("✅ Invalid token test passed")
 }

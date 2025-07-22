@@ -1,8 +1,8 @@
 # Build stage for integration tests
 FROM golang:1.23-alpine AS test-builder
 
-# Install dependencies for integration tests
-RUN apk add --no-cache curl wget jq git
+# Install minimal dependencies for integration tests (curl for debugging if needed)
+RUN apk add --no-cache curl
 
 WORKDIR /app
 
