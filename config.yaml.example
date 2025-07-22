@@ -22,5 +22,3 @@ keys:
     # Add more key IDs as needed for testing key rotation
     # - "key-3" 
     # - "backup-key"
-
-log_level: "info"  # debug, info, warn, error

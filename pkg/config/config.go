@@ -11,10 +11,9 @@ import (
 
 // Config holds all configuration for the JWKS mock service
 type Config struct {
-	Server   ServerConfig `yaml:"server"`
-	JWT      JWTConfig    `yaml:"jwt"`
-	Keys     KeysConfig   `yaml:"keys"`
-	LogLevel string       `yaml:"log_level"`
+	Server ServerConfig `yaml:"server"`
+	JWT    JWTConfig    `yaml:"jwt"`
+	Keys   KeysConfig   `yaml:"keys"`
 }
 
 // ServerConfig holds server-related configuration
@@ -51,7 +50,6 @@ func Load(configFile string) (*Config, error) {
 			Count:  2,
 			KeyIDs: []string{"key-1", "key-2"},
 		},
-		LogLevel: "info",
 	}
 
 	// Load from config file if provided
@@ -95,10 +93,6 @@ func loadFromEnv(config *Config) {
 
 	if audience := os.Getenv("JWT_AUDIENCE"); audience != "" {
 		config.JWT.Audience = audience
-	}
-
-	if logLevel := os.Getenv("LOG_LEVEL"); logLevel != "" {
-		config.LogLevel = logLevel
 	}
 
 	if keyIDs := os.Getenv("KEY_IDS"); keyIDs != "" {
