@@ -45,4 +45,4 @@ build/
 # Test results and artifacts
 test/integration/results/
 coverage.out
-*.cover
+*.covervendor/

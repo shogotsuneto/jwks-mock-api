@@ -1,41 +1,39 @@
 # Build stage
-FROM golang:1.23-alpine AS builder
+FROM golang:1.23 AS builder
 
 # Install ca-certificates for TLS
-RUN apk --no-cache add ca-certificates
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Create appuser
-RUN adduser -D -g '' appuser
+RUN useradd -m -s /bin/bash appuser
 
 WORKDIR /build
 
-# Copy go mod files
+# Copy go mod files and vendor directory
 COPY go.mod go.sum ./
-
-# Download dependencies
-ENV GOPROXY=direct
-ENV GOSUMDB=off
-RUN go mod download
-RUN go mod verify
+COPY vendor/ vendor/
 
 # Copy source code
 COPY . .
 
-# Build the binary with optimizations
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+# Build with vendor
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor \
     -ldflags='-w -s -extldflags "-static"' \
     -a -installsuffix cgo \
     -o jwks-mock-api \
     ./cmd/jwks-mock-api
 
 # Final stage
-FROM alpine:latest
+FROM debian:bookworm-slim
+
+# Install ca-certificates for runtime
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Copy our static executable
 COPY --from=builder /build/jwks-mock-api /jwks-mock-api
 
-# Copy appuser from builder
-COPY --from=builder /etc/passwd /etc/passwd
+# Create appuser for runtime
+RUN useradd -m -s /bin/bash appuser
 
 # Use an unprivileged user
 USER appuser

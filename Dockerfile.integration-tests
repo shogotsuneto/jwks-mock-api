@@ -1,19 +1,13 @@
 # Build stage for integration tests
-FROM golang:1.23-alpine AS test-builder
+FROM golang:1.23 AS test-builder
 
-# Install ca-certificates for TLS and minimal dependencies for integration tests 
-RUN apk add --no-cache ca-certificates curl
+# Install ca-certificates for TLS
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Copy only the integration test directory
 COPY test/integration/ ./
-
-# Download dependencies
-ENV GOPROXY=direct
-ENV GOSUMDB=off
-RUN go mod download
-RUN go mod verify
 
 # Create test results directory
 RUN mkdir -p /app/results
