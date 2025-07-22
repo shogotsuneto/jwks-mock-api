@@ -34,7 +34,6 @@ func New(cfg *config.Config, keyManager *keys.Manager) *Handler {
 // TokenResponse represents a token generation response
 type TokenResponse struct {
 	AccessToken string                 `json:"access_token"`
-	TokenType   string                 `json:"token_type"`
 	ExpiresIn   string                 `json:"expires_in"`
 	KeyID       string                 `json:"key_id"`
 	RawRequest  map[string]interface{} `json:"raw_request"`
@@ -157,7 +156,6 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 
 	response := TokenResponse{
 		AccessToken: tokenString,
-		TokenType:   "Bearer",
 		ExpiresIn:   expiresIn,
 		KeyID:       keyPair.Kid,
 		RawRequest:  rawRequest, // Include all the dynamic request data
@@ -324,7 +322,6 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 
 	response := TokenResponse{
 		AccessToken: tokenString,
-		TokenType:   "Bearer",
 		ExpiresIn:   expiresIn,
 		KeyID:       validKey.Kid,
 		RawRequest:  rawRequest, // Include all the dynamic request data

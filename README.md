@@ -95,7 +95,6 @@ curl -X POST http://localhost:3000/generate-token \
 ```json
 {
   "access_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtleS0xIiwidHlwIjoiSldUIn0...",
-  "token_type": "Bearer", 
   "expires_in": "1h",
   "key_id": "key-1"
 }
