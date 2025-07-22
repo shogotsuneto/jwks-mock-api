@@ -70,12 +70,7 @@ test-all:
 	@echo "Running all tests..."
 	@$(MAKE) test-integration
 
-# Generate coverage for integration tests
-test-integration-coverage:
-	@echo "Running Docker integration tests with coverage..."
-	@mkdir -p ./test/integration/results
-	@docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from integration-tests
-	@docker compose -f docker-compose.test.yml down
+
 
 # Clean build artifacts
 clean:
