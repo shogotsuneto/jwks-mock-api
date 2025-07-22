@@ -38,7 +38,7 @@ services:
       - ./test/integration/results:/app/results
     networks:
       - test-network
-    command: ["go", "test", "-v", "./test/integration/..."]
+    command: ["sh", "-c", "cd test/integration && go test -v ./..."]
 
 
 

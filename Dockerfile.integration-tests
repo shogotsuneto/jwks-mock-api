@@ -20,4 +20,4 @@ COPY . .
 RUN mkdir -p /app/results
 
 # Run integration tests by default
-CMD ["go", "test", "-v", "./test/integration/..."]
+CMD ["sh", "-c", "cd test/integration && go test -v ./..."]

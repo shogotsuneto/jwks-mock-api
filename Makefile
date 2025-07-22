@@ -48,7 +48,7 @@ test-integration-external:
 	@echo "Waiting for server to be ready..."
 	@sleep 10
 	@echo "Running integration tests against external server..."
-	@JWKS_API_URL=http://localhost:3001 go test -v ./test/integration/...
+	@JWKS_API_URL=http://localhost:3001 sh -c 'cd ./test/integration && go test -v ./...'
 	@echo "Cleaning up external test server..."
 	@docker compose -f docker-compose.test.yml down
 
