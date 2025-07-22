@@ -33,12 +33,8 @@ services:
     environment:
       - JWKS_API_URL=http://jwks-api:3000
       - TEST_TIMEOUT=30s
-    volumes:
-      - ./test/integration:/app/test/integration
-      - ./test/integration/results:/app/results
     networks:
       - test-network
-    command: ["sh", "-c", "cd test/integration && go test -v ./..."]
 
 
 

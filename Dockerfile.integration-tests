@@ -6,18 +6,15 @@ RUN apk add --no-cache curl wget jq
 
 WORKDIR /app
 
-# Copy go mod files
-COPY go.mod go.sum ./
+# Copy only the integration test directory
+COPY test/integration/ ./
 
-# Download dependencies
+# Download dependencies for integration tests
 RUN go mod download
 RUN go mod verify
-
-# Copy source code and test files
-COPY . .
 
 # Create test results directory
 RUN mkdir -p /app/results
 
 # Run integration tests by default
-CMD ["sh", "-c", "cd test/integration && go test -v ./..."]
+CMD ["go", "test", "-v", "./..."]
