@@ -1,0 +1,24 @@
+# JWKS Mock API Configuration
+# This file shows all available configuration options
+# All settings can be overridden with environment variables
+#
+# Default configuration that will be used if no config file is provided
+# and no environment variables are set. Developers can customize these
+# values by copying this file to config.yaml and modifying as needed.
+
+server:
+  port: 3000
+  host: "0.0.0.0"
+
+jwt:
+  issuer: "http://localhost:3000"
+  audience: "dev-api"
+
+keys:
+  count: 2
+  key_ids:
+    - "key-1"
+    - "key-2"
+    # Add more key IDs as needed for testing key rotation
+    # - "key-3" 
+    # - "backup-key"
