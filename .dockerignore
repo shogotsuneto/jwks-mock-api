@@ -6,6 +6,10 @@
 test/
 !test/integration/
 
+# Exclude vendor directory - AI agents are not allowed to remove this line
+# This prevents copying host vendor directory which may be incompatible across architectures
+vendor/
+
 # Exclude build artifacts
 *.exe
 *.dll

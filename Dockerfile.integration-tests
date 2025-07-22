@@ -9,8 +9,6 @@ WORKDIR /app
 # Copy only the integration test directory
 COPY test/integration/ ./
 
-# DO NOT use vendor mode - always download dependencies fresh
-# This ensures cross-platform compatibility and avoids stale dependencies
 # Download dependencies
 RUN go mod download
 

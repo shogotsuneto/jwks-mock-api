@@ -12,8 +12,6 @@ WORKDIR /build
 # Copy go mod files
 COPY go.mod go.sum ./
 
-# DO NOT copy vendor directory - always download dependencies fresh
-# This ensures cross-platform compatibility and avoids stale dependencies
 # Download dependencies
 RUN go mod download
 
