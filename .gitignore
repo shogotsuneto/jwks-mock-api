@@ -41,3 +41,8 @@ config.json
 # Build artifacts
 dist/
 build/
+
+# Test results and artifacts
+test/integration/results/
+coverage.out
+*.cover

@@ -1,0 +1,23 @@
+# Build stage for integration tests
+FROM golang:1.23-alpine AS test-builder
+
+# Install dependencies for integration tests
+RUN apk add --no-cache curl wget jq
+
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+RUN go mod verify
+
+# Copy source code and test files
+COPY . .
+
+# Create test results directory
+RUN mkdir -p /app/results
+
+# Run integration tests by default
+CMD ["go", "test", "-v", "./test/integration/..."]

@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Create appuser
 RUN adduser -D -g '' appuser
@@ -24,7 +24,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     ./cmd/jwks-mock-api
 
 # Final stage
-FROM scratch
+FROM alpine:latest
 
 # Copy our static executable
 COPY --from=builder /build/jwks-mock-api /jwks-mock-api

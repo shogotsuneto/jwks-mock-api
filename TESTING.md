@@ -4,14 +4,60 @@ This document describes the comprehensive test suite for the JWKS Mock API, desi
 
 ## Test Coverage
 
-The test suite provides **80.8%+ coverage** for core components:
+### Unit Test Coverage
+
+The unit test suite provides **80.8%+ coverage** for core components:
 
 - **`pkg/handlers`**: 80.8% - Complete API endpoint testing
 - **`internal/keys`**: 80.8% - Key management and JWKS generation
 - **`pkg/config`**: 100% - Configuration loading and environment handling
 - **`internal/server`**: 34.1% - Server setup and routing
 
+### Docker Integration Tests
+
+The Docker integration test suite provides **real-world scenario testing**:
+
+- **Real API Endpoints**: Tests against actual containerized service
+- **Production Environment**: Validates Docker deployment scenarios
+- **Network Communication**: Tests container-to-container communication
+- **State Persistence**: Ready for testing future persistence features
+- **Load Testing**: Performance validation under realistic conditions
+
+#### Integration Test Structure (`test/integration/`)
+
+##### API Tests (`api_test.go`)
+- Real HTTP requests to containerized API
+- JWKS endpoint validation with actual network calls
+- Token generation and introspection via HTTP
+- CORS validation with real browsers
+- Error handling with network timeouts
+
+##### Real-World Scenarios (`scenarios_test.go`)
+- **Complete JWT Workflow**: Generate → Fetch JWKS → Validate → Introspect
+- **Microservices Communication**: Service-to-service token testing
+- **Key Rotation Simulation**: Multiple key usage in production-like environment
+- **High-Volume Testing**: Load testing with 50+ concurrent requests
+- **API Authentication**: Scope-based authorization testing
+
+## Unit Test Details
+
 ## Test Structure
+
+The testing strategy includes two complementary approaches:
+
+### 1. Unit/Integration Tests (Fast Development Cycle)
+- **Location**: `pkg/handlers/*_test.go`, `internal/*/test.go`
+- **Method**: In-memory `httptest.Server`
+- **Speed**: Fast (< 10 seconds)
+- **Purpose**: Development, debugging, code coverage
+
+### 2. Docker Integration Tests (Production-Like Testing)
+- **Location**: `test/integration/*_test.go`
+- **Method**: Real HTTP requests to containerized API
+- **Speed**: Moderate (30-60 seconds)
+- **Purpose**: CI/CD, deployment validation, real-world scenarios
+
+### Unit Test Coverage
 
 ### 1. API Integration Tests (`pkg/handlers/handlers_test.go`)
 
@@ -160,10 +206,10 @@ Server initialization and routing:
 
 ## Running Tests
 
-### Basic Test Execution
+### Unit Tests (Fast Development)
 ```bash
-# Run all tests
-make test
+# Run all unit tests
+make test-unit
 
 # Run tests with coverage
 make test-coverage
@@ -175,16 +221,42 @@ go test ./pkg/config/...
 go test ./internal/server/...
 ```
 
-### Verbose Output
+### Docker Integration Tests (Production-Like)
 ```bash
-# Run with verbose output
+# Run Docker-based integration tests
+make test-integration
+
+# Run integration tests against external Docker server (for development)
+make test-integration-external
+
+# Run all tests (unit + integration)
+make test-all
+```
+
+### Basic Test Execution (Legacy)
+```bash
+# Run all tests (includes both unit and integration if Docker is available)
+make test
+
+# Verbose output
 go test -v ./...
 
-# Run specific test function
+### Specific Test Execution
+```bash
+# Run with verbose output (unit tests)
+go test -v ./pkg/... ./internal/...
+
+# Run specific test function (unit tests)
 go test -v ./pkg/handlers -run TestHealthEndpoint
 
-# Run scenario tests only
+# Run scenario tests only (unit tests)
 go test -v ./pkg/handlers -run TestRealWorldScenarios
+
+# Run specific integration test
+JWKS_API_URL=http://localhost:3001 go test -v ./test/integration -run TestIntegrationCompleteJWTWorkflow
+
+# Run integration scenarios only
+JWKS_API_URL=http://localhost:3001 go test -v ./test/integration -run TestIntegrationMicroservices
 ```
 
 ### Coverage Analysis
@@ -246,7 +318,31 @@ go tool cover -func=coverage.out
 
 ## Backend Developer Use Cases
 
-### 1. JWT Validation Testing
+### 1. Fast Development Cycle (Unit Tests)
+```bash
+# Quick feedback during development
+make test-unit
+
+# Test specific handlers
+go test -v ./pkg/handlers -run TestHealthEndpoint
+
+# Test with coverage
+make test-coverage
+```
+
+### 2. Production-Ready Testing (Docker Integration Tests)
+```bash
+# Full integration testing with Docker
+make test-integration
+
+# Development workflow with external Docker server
+make test-integration-external
+
+# Run specific integration scenarios
+JWKS_API_URL=http://localhost:3001 go test -v ./test/integration -run TestIntegrationCompleteJWTWorkflow
+```
+
+### 3. JWT Validation Testing (Both Approaches Available)
 ```bash
 # Generate a token for testing
 curl -X POST http://localhost:3000/generate-token \
@@ -259,7 +355,20 @@ curl -X POST http://localhost:3000/introspect \
   -d "token=<generated_token>"
 ```
 
-### 2. JWKS Integration Testing
+### 3. JWT Validation Testing (Both Approaches Available)
+```bash
+# Generate a token for testing (works with both unit and Docker tests)
+curl -X POST http://localhost:3000/generate-token \
+  -H "Content-Type: application/json" \
+  -d '{"claims": {"sub": "test-user", "role": "admin"}}'
+
+# Validate the token using introspection
+curl -X POST http://localhost:3000/introspect \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "token=<generated_token>"
+```
+
+### 4. JWKS Integration Testing
 ```bash
 # Fetch JWKS for JWT library configuration
 curl http://localhost:3000/.well-known/jwks.json
@@ -268,7 +377,7 @@ curl http://localhost:3000/.well-known/jwks.json
 # (Use in your JWT library configuration)
 ```
 
-### 3. Error Scenario Testing
+### 5. Error Scenario Testing
 ```bash
 # Generate invalid token for failure testing
 curl -X POST http://localhost:3000/generate-invalid-token \
@@ -281,15 +390,66 @@ curl -X POST http://localhost:3000/introspect \
   -d "token=<invalid_token>"
 ```
 
+### When to Use Which Test Type
+
+- **Unit Tests**: Fast feedback during development, testing specific components, code coverage
+- **Docker Integration Tests**: Pre-deployment validation, testing real-world scenarios, CI/CD pipelines
+- **Both**: JWT workflows, API endpoint testing, error scenario validation
+
+## Test Summary
+
+This testing suite provides both **fast development feedback** and **production-ready validation**:
+
+| Test Type | Purpose | Execution Time | Use Case |
+|-----------|---------|---------------|----------|
+| **Unit Tests** | Fast development feedback | < 10 seconds | Development, debugging, code coverage |
+| **Docker Integration** | Production validation | 30-60 seconds | CI/CD, deployment testing, real-world scenarios |
+
+Both test types cover the same scenarios but with different approaches:
+- Unit tests use in-memory servers for speed
+- Docker tests use real containers for production parity
+
 ## Continuous Integration
 
-The test suite is designed for CI/CD pipelines:
+### Unit Tests
+The unit test suite is designed for fast CI/CD pipelines:
 
 - **Fast execution**: Most tests complete in under 10 seconds
 - **No external dependencies**: Self-contained test server
 - **Deterministic**: Tests use fixed seeds and configurations
 - **Parallel safe**: No shared state between tests
 - **Coverage reporting**: Compatible with codecov, coveralls
+
+### Docker Integration Tests
+The integration test suite is designed for comprehensive CI/CD validation:
+
+- **Production parity**: Tests actual containerized deployment
+- **Network validation**: Tests container networking and communication
+- **State persistence**: Ready for testing future persistence features like key storage
+- **Load testing**: Validates performance under realistic conditions
+- **Real HTTP**: Tests actual HTTP clients and network behavior
+
+#### CI/CD Pipeline Example
+```yaml
+# GitHub Actions
+name: Tests
+on: [push, pull_request]
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.21
+      - run: make test-unit
+      
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: make test-integration
+```
 
 ## Adding New Tests
 
