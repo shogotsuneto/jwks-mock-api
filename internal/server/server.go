@@ -101,8 +101,8 @@ func (s *Server) setupRoutes() *mux.Router {
 	router.HandleFunc("/generate-token", s.handler.GenerateToken).Methods("POST")
 	router.HandleFunc("/generate-invalid-token", s.handler.GenerateInvalidToken).Methods("POST")
 
-	// Token validation endpoint
-	router.HandleFunc("/validate-token", s.handler.ValidateToken).Methods("POST")
+	// Token introspection endpoint (OAuth 2.0 RFC 7662)
+	router.HandleFunc("/introspect", s.handler.Introspect).Methods("POST")
 
 	// Health and info endpoints
 	router.HandleFunc("/health", s.handler.Health).Methods("GET")

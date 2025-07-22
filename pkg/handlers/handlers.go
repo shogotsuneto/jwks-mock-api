@@ -39,17 +39,80 @@ type TokenResponse struct {
 	RawRequest  map[string]interface{} `json:"raw_request"`
 }
 
-// ValidationRequest represents a token validation request
-type ValidationRequest struct {
-	Token string `json:"token"`
+// IntrospectionResponse represents an OAuth 2.0 token introspection response (RFC 7662)
+type IntrospectionResponse struct {
+	Active    bool                   `json:"active"`
+	TokenType string                 `json:"token_type,omitempty"`
+	Scope     string                 `json:"scope,omitempty"`
+	ClientID  string                 `json:"client_id,omitempty"`
+	Username  string                 `json:"username,omitempty"`
+	Exp       int64                  `json:"exp,omitempty"`
+	Iat       int64                  `json:"iat,omitempty"`
+	Nbf       int64                  `json:"nbf,omitempty"`
+	Sub       string                 `json:"sub,omitempty"`
+	Aud       string                 `json:"aud,omitempty"`
+	Iss       string                 `json:"iss,omitempty"`
+	Jti       string                 `json:"jti,omitempty"`
+	// Additional claims from the original token
+	Claims map[string]interface{} `json:"-"` // Use custom marshaling to flatten
 }
 
-// ValidationResponse represents a token validation response
-type ValidationResponse struct {
-	Valid   bool                   `json:"valid"`
-	Decoded map[string]interface{} `json:"decoded,omitempty"`
-	KeyID   string                 `json:"key_id,omitempty"`
-	Error   string                 `json:"error,omitempty"`
+// MarshalJSON implements custom JSON marshaling to flatten claims into the response
+func (r IntrospectionResponse) MarshalJSON() ([]byte, error) {
+	// Create a map with the standard fields
+	result := map[string]interface{}{
+		"active": r.Active,
+	}
+	
+	// Add optional standard fields
+	if r.TokenType != "" {
+		result["token_type"] = r.TokenType
+	}
+	if r.Scope != "" {
+		result["scope"] = r.Scope
+	}
+	if r.ClientID != "" {
+		result["client_id"] = r.ClientID
+	}
+	if r.Username != "" {
+		result["username"] = r.Username
+	}
+	if r.Exp != 0 {
+		result["exp"] = r.Exp
+	}
+	if r.Iat != 0 {
+		result["iat"] = r.Iat
+	}
+	if r.Nbf != 0 {
+		result["nbf"] = r.Nbf
+	}
+	if r.Sub != "" {
+		result["sub"] = r.Sub
+	}
+	if r.Aud != "" {
+		result["aud"] = r.Aud
+	}
+	if r.Iss != "" {
+		result["iss"] = r.Iss
+	}
+	if r.Jti != "" {
+		result["jti"] = r.Jti
+	}
+	
+	// Add additional claims, avoiding overwriting standard fields
+	standardFields := map[string]bool{
+		"active": true, "token_type": true, "scope": true, "client_id": true,
+		"username": true, "exp": true, "iat": true, "nbf": true,
+		"sub": true, "aud": true, "iss": true, "jti": true,
+	}
+	
+	for key, value := range r.Claims {
+		if !standardFields[key] {
+			result[key] = value
+		}
+	}
+	
+	return json.Marshal(result)
 }
 
 // HealthResponse represents a health check response
@@ -165,27 +228,28 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// ValidateToken validates a JWT token
-func (h *Handler) ValidateToken(w http.ResponseWriter, r *http.Request) {
-	var req ValidationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error": "Invalid JSON request"}`, http.StatusBadRequest)
-		return
-	}
-
-	if req.Token == "" {
-		response := ValidationResponse{
-			Valid: false,
-			Error: "Token is required",
-		}
+// Introspect implements OAuth 2.0 Token Introspection (RFC 7662)
+func (h *Handler) Introspect(w http.ResponseWriter, r *http.Request) {
+	// Parse form data (RFC 7662 requires application/x-www-form-urlencoded)
+	if err := r.ParseForm(); err != nil {
+		response := IntrospectionResponse{Active: false}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
+	token := r.FormValue("token")
+	if token == "" {
+		response := IntrospectionResponse{Active: false}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK) // RFC 7662: return 200 even for missing token
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 	// Parse token to get the kid
-	token, err := jwt.Parse(req.Token, func(token *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		// Validate the alg is RS256
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -206,38 +270,57 @@ func (h *Handler) ValidateToken(w http.ResponseWriter, r *http.Request) {
 		return keyPair.PublicKey, nil
 	})
 
-	response := ValidationResponse{}
+	response := IntrospectionResponse{}
 
-	if err != nil {
-		response.Valid = false
-		response.Error = err.Error()
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-	} else if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+	if err != nil || !parsedToken.Valid {
+		// Token is not active (invalid, expired, etc.)
+		response.Active = false
+	} else if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok {
 		// Validate issuer and audience
-		if claims["iss"] != h.config.JWT.Issuer {
-			response.Valid = false
-			response.Error = "invalid issuer"
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-		} else if claims["aud"] != h.config.JWT.Audience {
-			response.Valid = false
-			response.Error = "invalid audience"
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
+		if claims["iss"] != h.config.JWT.Issuer || claims["aud"] != h.config.JWT.Audience {
+			response.Active = false
 		} else {
-			response.Valid = true
-			response.Decoded = claims
-			response.KeyID = token.Header["kid"].(string)
-			w.Header().Set("Content-Type", "application/json")
+			// Token is active - populate response with claims
+			response.Active = true
+			response.TokenType = "Bearer"
+			
+			// Map standard JWT claims to introspection response
+			if exp, ok := claims["exp"].(float64); ok {
+				response.Exp = int64(exp)
+			}
+			if iat, ok := claims["iat"].(float64); ok {
+				response.Iat = int64(iat)
+			}
+			if nbf, ok := claims["nbf"].(float64); ok {
+				response.Nbf = int64(nbf)
+			}
+			if sub, ok := claims["sub"].(string); ok {
+				response.Sub = sub
+				response.Username = sub // Use sub as username
+			}
+			if aud, ok := claims["aud"].(string); ok {
+				response.Aud = aud
+			}
+			if iss, ok := claims["iss"].(string); ok {
+				response.Iss = iss
+			}
+			if jti, ok := claims["jti"].(string); ok {
+				response.Jti = jti
+			}
+			
+			// Add all other claims
+			response.Claims = make(map[string]interface{})
+			for key, value := range claims {
+				response.Claims[key] = value
+			}
 		}
 	} else {
-		response.Valid = false
-		response.Error = "invalid token"
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
+		response.Active = false
 	}
 
+	// Always return 200 OK per RFC 7662
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 

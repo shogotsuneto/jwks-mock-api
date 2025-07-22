@@ -31,7 +31,7 @@ cd jwks-mock-api && make build && ./jwks-mock-api
 | GET | `/.well-known/jwks.json` | Standard JWKS endpoint |
 | POST | `/generate-token` | Generate JWT with **dynamic claims** |
 | POST | `/generate-invalid-token` | Invalid token for testing |
-| POST | `/validate-token` | Validate JWT token |
+| POST | `/introspect` | OAuth 2.0 Token Introspection (RFC 7662) |
 | GET | `/health` | Health check |
 | GET | `/keys` | Available keys info |
 
@@ -104,11 +104,11 @@ curl -X POST http://localhost:3000/generate-token \
 
 ### Other Examples
 
-**Validate Token:**
+**Introspect Token (OAuth 2.0 RFC 7662):**
 ```bash
-curl -X POST http://localhost:3000/validate-token \
-  -H "Content-Type: application/json" \
-  -d '{"token": "eyJhbGciOiJSUzI1NiIs..."}'
+curl -X POST http://localhost:3000/introspect \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "token=eyJhbGciOiJSUzI1NiIs..."
 ```
 
 **Get JWKS:** `curl http://localhost:3000/.well-known/jwks.json`
