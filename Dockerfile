@@ -1,21 +1,27 @@
 # Build stage
 FROM golang:1.23-alpine AS builder
 
+# Install ca-certificates for TLS
+RUN apk --no-cache add ca-certificates
+
 # Create appuser
 RUN adduser -D -g '' appuser
 
 WORKDIR /build
 
-# Copy go mod files and source
+# Copy go mod files
 COPY go.mod go.sum ./
-COPY . .
 
-# Create vendor directory
-RUN go mod vendor
+# Download dependencies
+RUN go mod download
 
-# Build with vendor
+# Copy source code (excluding vendor directory via .dockerignore)
+COPY cmd/ cmd/
+COPY internal/ internal/
+COPY pkg/ pkg/
+
+# Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-    -mod=vendor \
     -ldflags='-w -s -extldflags "-static"' \
     -a -installsuffix cgo \
     -o jwks-mock-api \

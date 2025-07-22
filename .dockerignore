@@ -1,0 +1,30 @@
+# Exclude vendor directory to avoid cross-architecture issues
+vendor/
+
+# Exclude git and other development files
+.git/
+.gitignore
+
+# Exclude test files not needed for build
+test/
+
+# Exclude build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Exclude temporary files
+.tmp/
+tmp/
+
+# Exclude documentation that's not needed for runtime
+*.md
+LICENSE
+
+# Exclude configuration examples
+*.example
+
+# Exclude Docker files themselves
+Dockerfile*
+docker-compose*.yml
