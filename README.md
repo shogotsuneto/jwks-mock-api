@@ -97,7 +97,7 @@ curl -X POST http://localhost:3000/generate-token \
 ```json
 {
   "access_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtleS0xIiwidHlwIjoiSldUIn0...",
-  "expires_in": "3600",
+  "expires_in": 3600,
   "key_id": "key-1"
 }
 ```

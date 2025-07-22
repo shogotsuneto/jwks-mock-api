@@ -13,7 +13,7 @@ import (
 
 // KeyPair represents an RSA key pair with metadata
 type KeyPair struct {
-	Kid        string  `json:"kid"`
+	Kid        string `json:"kid"`
 	PrivateKey *rsa.PrivateKey
 	PublicKey  *rsa.PublicKey
 	JWK        jwk.Key

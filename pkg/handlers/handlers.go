@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -29,30 +28,28 @@ func New(cfg *config.Config, keyManager *keys.Manager) *Handler {
 	}
 }
 
-
-
 // TokenResponse represents a token generation response
 type TokenResponse struct {
 	AccessToken string                 `json:"access_token"`
-	ExpiresIn   string                 `json:"expires_in"`
+	ExpiresIn   int                    `json:"expires_in"`
 	KeyID       string                 `json:"key_id"`
 	RawRequest  map[string]interface{} `json:"raw_request"`
 }
 
 // IntrospectionResponse represents an OAuth 2.0 token introspection response (RFC 7662)
 type IntrospectionResponse struct {
-	Active    bool                   `json:"active"`
-	TokenType string                 `json:"token_type,omitempty"`
-	Scope     string                 `json:"scope,omitempty"`
-	ClientID  string                 `json:"client_id,omitempty"`
-	Username  string                 `json:"username,omitempty"`
-	Exp       int64                  `json:"exp,omitempty"`
-	Iat       int64                  `json:"iat,omitempty"`
-	Nbf       int64                  `json:"nbf,omitempty"`
-	Sub       string                 `json:"sub,omitempty"`
-	Aud       string                 `json:"aud,omitempty"`
-	Iss       string                 `json:"iss,omitempty"`
-	Jti       string                 `json:"jti,omitempty"`
+	Active    bool   `json:"active"`
+	TokenType string `json:"token_type,omitempty"`
+	Scope     string `json:"scope,omitempty"`
+	ClientID  string `json:"client_id,omitempty"`
+	Username  string `json:"username,omitempty"`
+	Exp       int64  `json:"exp,omitempty"`
+	Iat       int64  `json:"iat,omitempty"`
+	Nbf       int64  `json:"nbf,omitempty"`
+	Sub       string `json:"sub,omitempty"`
+	Aud       string `json:"aud,omitempty"`
+	Iss       string `json:"iss,omitempty"`
+	Jti       string `json:"jti,omitempty"`
 	// Additional claims from the original token
 	Claims map[string]interface{} `json:"-"` // Use custom marshaling to flatten
 }
@@ -63,7 +60,7 @@ func (r IntrospectionResponse) MarshalJSON() ([]byte, error) {
 	result := map[string]interface{}{
 		"active": r.Active,
 	}
-	
+
 	// Add optional standard fields
 	if r.TokenType != "" {
 		result["token_type"] = r.TokenType
@@ -98,20 +95,20 @@ func (r IntrospectionResponse) MarshalJSON() ([]byte, error) {
 	if r.Jti != "" {
 		result["jti"] = r.Jti
 	}
-	
+
 	// Add additional claims, avoiding overwriting standard fields
 	standardFields := map[string]bool{
 		"active": true, "token_type": true, "scope": true, "client_id": true,
 		"username": true, "exp": true, "iat": true, "nbf": true,
 		"sub": true, "aud": true, "iss": true, "jti": true,
 	}
-	
+
 	for key, value := range r.Claims {
 		if !standardFields[key] {
 			result[key] = value
 		}
 	}
-	
+
 	return json.Marshal(result)
 }
 
@@ -127,8 +124,6 @@ type KeysResponse struct {
 	TotalKeys     int                      `json:"total_keys"`
 	AvailableKeys []map[string]interface{} `json:"available_keys"`
 }
-
-
 
 // JWKS returns the JSON Web Key Set
 func (h *Handler) JWKS(w http.ResponseWriter, r *http.Request) {
@@ -218,7 +213,7 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 
 	response := TokenResponse{
 		AccessToken: tokenString,
-		ExpiresIn:   strconv.Itoa(expiresInSeconds),
+		ExpiresIn:   expiresInSeconds,
 		KeyID:       keyPair.Kid,
 		RawRequest:  claims, // Include all the dynamic request claims
 	}
@@ -282,7 +277,7 @@ func (h *Handler) Introspect(w http.ResponseWriter, r *http.Request) {
 			// Token is active - populate response with claims
 			response.Active = true
 			response.TokenType = "Bearer"
-			
+
 			// Map standard JWT claims to introspection response
 			if exp, ok := claims["exp"].(float64); ok {
 				response.Exp = int64(exp)
@@ -306,7 +301,7 @@ func (h *Handler) Introspect(w http.ResponseWriter, r *http.Request) {
 			if jti, ok := claims["jti"].(string); ok {
 				response.Jti = jti
 			}
-			
+
 			// Add all other claims
 			response.Claims = make(map[string]interface{})
 			for key, value := range claims {
@@ -322,8 +317,6 @@ func (h *Handler) Introspect(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
-
-
 
 // GenerateInvalidToken generates an invalid JWT token for testing
 func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
@@ -396,7 +389,7 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 
 	response := TokenResponse{
 		AccessToken: tokenString,
-		ExpiresIn:   strconv.Itoa(expiresInSeconds),
+		ExpiresIn:   expiresInSeconds,
 		KeyID:       validKey.Kid,
 		RawRequest:  claims, // Include all the dynamic request claims
 	}
@@ -404,8 +397,6 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
-
-
 
 // Health returns the health status of the service
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
