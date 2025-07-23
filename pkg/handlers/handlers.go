@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/shogotsuneto/jwks-mock-api/internal/keys"
 	"github.com/shogotsuneto/jwks-mock-api/pkg/config"
+	"github.com/shogotsuneto/jwks-mock-api/pkg/logger"
 )
 
 // Handler contains the HTTP handlers for the JWKS service
@@ -131,7 +131,7 @@ type KeysResponse struct {
 func (h *Handler) JWKS(w http.ResponseWriter, r *http.Request) {
 	jwks, err := h.keyManager.GetJWKS()
 	if err != nil {
-		log.Printf("Error generating JWKS: %v", err)
+		logger.Errorf("Error generating JWKS: %v", err)
 		http.Error(w, `{"error": "Failed to generate JWKS"}`, http.StatusInternalServerError)
 		return
 	}
@@ -140,7 +140,7 @@ func (h *Handler) JWKS(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 
 	if err := json.NewEncoder(w).Encode(jwks); err != nil {
-		log.Printf("Error encoding JWKS response: %v", err)
+		logger.Errorf("Error encoding JWKS response: %v", err)
 		http.Error(w, `{"error": "Failed to encode JWKS"}`, http.StatusInternalServerError)
 		return
 	}
@@ -181,7 +181,7 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 	// Get a random key for signing
 	keyPair, err := h.keyManager.GetRandomKey()
 	if err != nil {
-		log.Printf("Error getting random key: %v", err)
+		logger.Errorf("Error getting random key: %v", err)
 		http.Error(w, `{"error": "Failed to get signing key"}`, http.StatusInternalServerError)
 		return
 	}
@@ -208,7 +208,7 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 	// Sign token
 	tokenString, err := token.SignedString(keyPair.PrivateKey)
 	if err != nil {
-		log.Printf("Error signing token: %v", err)
+		logger.Errorf("Error signing token: %v", err)
 		http.Error(w, `{"error": "Failed to sign token"}`, http.StatusInternalServerError)
 		return
 	}
@@ -349,7 +349,7 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	// Get a valid key to use its kid
 	validKey, err := h.keyManager.GetRandomKey()
 	if err != nil {
-		log.Printf("Error getting random key: %v", err)
+		logger.Errorf("Error getting random key: %v", err)
 		http.Error(w, `{"error": "Failed to get signing key"}`, http.StatusInternalServerError)
 		return
 	}
@@ -357,7 +357,7 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	// Generate a temporary invalid key pair
 	invalidPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		log.Printf("Error generating invalid key: %v", err)
+		logger.Errorf("Error generating invalid key: %v", err)
 		http.Error(w, `{"error": "Failed to generate invalid key"}`, http.StatusInternalServerError)
 		return
 	}
@@ -384,7 +384,7 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	// Sign token with invalid key
 	tokenString, err := token.SignedString(invalidPrivateKey)
 	if err != nil {
-		log.Printf("Error signing invalid token: %v", err)
+		logger.Errorf("Error signing invalid token: %v", err)
 		http.Error(w, `{"error": "Failed to sign invalid token"}`, http.StatusInternalServerError)
 		return
 	}
