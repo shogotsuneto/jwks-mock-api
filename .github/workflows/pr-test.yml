@@ -1,0 +1,27 @@
+name: Pull Request Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  integration-tests:
+    name: Docker Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Run integration tests
+      run: make test-integration
+      timeout-minutes: 10
+      
+    - name: Clean up Docker resources
+      if: always()
+      run: |
+        docker system prune -f
+        docker volume prune -f
