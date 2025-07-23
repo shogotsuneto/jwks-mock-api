@@ -160,6 +160,36 @@ The project includes comprehensive Docker-based integration tests that validate 
 
 See `test/integration/README.md` for detailed testing documentation.
 
+## Development Release Pipeline
+
+This project includes an automated dev release pipeline that builds and publishes artifacts when code is pushed to the `develop` branch.
+
+### Published Artifacts
+
+**Binary Artifacts:**
+- Linux x86_64 optimized binary available as GitHub Actions artifacts
+- Retention period: 30 days
+
+**Container Images (GitHub Container Registry):**
+- `ghcr.io/shogotsuneto/jwks-mock-api:develop-latest` - Latest develop build
+- `ghcr.io/shogotsuneto/jwks-mock-api:develop-<sha>` - Specific commit build
+- `ghcr.io/shogotsuneto/jwks-mock-api:develop-<sha>-<timestamp>` - Full version
+
+### Setup Requirements
+
+The dev release pipeline requires the following repository configuration:
+
+**Access Published Images**:
+   ```bash
+   # Pull latest dev image
+   docker pull ghcr.io/shogotsuneto/jwks-mock-api:develop-latest
+   
+   # Run dev container
+   docker run -p 3000:3000 ghcr.io/shogotsuneto/jwks-mock-api:develop-latest
+   ```
+
+**Note**: The GitHub Container Registry (ghcr.io) automatically inherits repository permissions. Public repositories will have public images, private repositories will have private images.
+
 ## Project Structure
 
 ```
@@ -170,6 +200,9 @@ See `test/integration/README.md` for detailed testing documentation.
 ├── pkg/                   # Public packages
 │   ├── config/            # Configuration
 │   └── handlers/          # HTTP handlers
+├── .github/workflows/     # GitHub Actions workflows
+│   ├── pr-test.yml        # PR testing pipeline
+│   └── dev-release.yml    # Dev release pipeline
 ├── config.yaml.example   # Example config
 ├── Dockerfile & Makefile # Build automation
 ```

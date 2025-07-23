@@ -1,0 +1,122 @@
+name: Dev Release Pipeline
+
+on:
+  push:
+    branches: [ develop ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    name: Build and Release Dev Artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+        
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+          
+    - name: Download dependencies
+      run: go mod download
+      
+    - name: Verify Go installation
+      run: go version
+      
+    - name: Run basic validation
+      run: |
+        go mod verify
+        go vet ./...
+        
+    - name: Generate version info
+      id: version
+      run: |
+        COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+        BUILD_DATE=$(date -u '+%Y%m%d-%H%M%S')
+        VERSION="develop-${COMMIT_SHA}-${BUILD_DATE}"
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "commit_sha=${COMMIT_SHA}" >> $GITHUB_OUTPUT
+        echo "build_date=${BUILD_DATE}" >> $GITHUB_OUTPUT
+        
+    - name: Build optimized binary
+      run: |
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+          -ldflags='-w -s -extldflags "-static"' \
+          -o jwks-mock-api-${{ steps.version.outputs.version }} \
+          ./cmd/jwks-mock-api
+          
+    - name: Verify binary
+      run: |
+        file jwks-mock-api-${{ steps.version.outputs.version }}
+        ls -lh jwks-mock-api-${{ steps.version.outputs.version }}
+          
+    - name: Upload binary artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: jwks-mock-api-${{ steps.version.outputs.version }}
+        path: jwks-mock-api-${{ steps.version.outputs.version }}
+        retention-days: 30
+        
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=raw,value=develop-latest
+          type=raw,value=develop-${{ steps.version.outputs.commit_sha }}
+          type=raw,value=${{ steps.version.outputs.version }}
+          
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Output summary
+      run: |
+        echo "## 🚀 Dev Release Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Version:** \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** \`${{ steps.version.outputs.commit_sha }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Build Date:** \`${{ steps.version.outputs.build_date }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Artifacts Published:" >> $GITHUB_STEP_SUMMARY
+        echo "- **Binary:** \`jwks-mock-api-${{ steps.version.outputs.version }}\` (available as GitHub artifact)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Container Images:**" >> $GITHUB_STEP_SUMMARY
+        echo "  - \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop-latest\`" >> $GITHUB_STEP_SUMMARY
+        echo "  - \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop-${{ steps.version.outputs.commit_sha }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "  - \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
