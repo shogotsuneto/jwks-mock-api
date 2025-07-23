@@ -38,6 +38,14 @@ jobs:
     - name: Download dependencies
       run: go mod download
       
+    - name: Verify Go installation
+      run: go version
+      
+    - name: Run basic validation
+      run: |
+        go mod verify
+        go vet ./...
+        
     - name: Generate version info
       id: version
       run: |
@@ -54,6 +62,11 @@ jobs:
           -ldflags='-w -s -extldflags "-static"' \
           -o jwks-mock-api-${{ steps.version.outputs.version }} \
           ./cmd/jwks-mock-api
+          
+    - name: Verify binary
+      run: |
+        file jwks-mock-api-${{ steps.version.outputs.version }}
+        ls -lh jwks-mock-api-${{ steps.version.outputs.version }}
           
     - name: Upload binary artifact
       uses: actions/upload-artifact@v4
