@@ -11,9 +11,9 @@ import (
 
 // Config holds all configuration for the JWKS mock service
 type Config struct {
-	Server ServerConfig `yaml:"server"`
-	JWT    JWTConfig    `yaml:"jwt"`
-	Keys   KeysConfig   `yaml:"keys"`
+	Server      ServerConfig      `yaml:"server"`
+	JWT         JWTConfig         `yaml:"jwt"`
+	InitialKeys InitialKeysConfig `yaml:"initial_keys"`
 }
 
 // ServerConfig holds server-related configuration
@@ -28,8 +28,8 @@ type JWTConfig struct {
 	Audience string `yaml:"audience"`
 }
 
-// KeysConfig holds key generation configuration
-type KeysConfig struct {
+// InitialKeysConfig holds initial key generation configuration
+type InitialKeysConfig struct {
 	Count  int      `yaml:"count"`
 	KeyIDs []string `yaml:"key_ids"`
 }
@@ -46,7 +46,7 @@ func Load(configFile string) (*Config, error) {
 			Issuer:   "http://localhost:3000",
 			Audience: "dev-api",
 		},
-		Keys: KeysConfig{
+		InitialKeys: InitialKeysConfig{
 			Count:  2,
 			KeyIDs: []string{"key-1", "key-2"},
 		},
@@ -100,16 +100,16 @@ func loadFromEnv(config *Config) {
 		for i := range ids {
 			ids[i] = strings.TrimSpace(ids[i])
 		}
-		config.Keys.KeyIDs = ids
-		config.Keys.Count = len(ids)
+		config.InitialKeys.KeyIDs = ids
+		config.InitialKeys.Count = len(ids)
 	} else if keyCount := os.Getenv("KEY_COUNT"); keyCount != "" {
 		if count, err := strconv.Atoi(keyCount); err == nil && count > 0 {
-			config.Keys.Count = count
+			config.InitialKeys.Count = count
 			// Generate generic key IDs based on count if no specific IDs provided
-			if len(config.Keys.KeyIDs) == 0 || len(config.Keys.KeyIDs) != count {
-				config.Keys.KeyIDs = make([]string, count)
+			if len(config.InitialKeys.KeyIDs) == 0 || len(config.InitialKeys.KeyIDs) != count {
+				config.InitialKeys.KeyIDs = make([]string, count)
 				for i := 0; i < count; i++ {
-					config.Keys.KeyIDs[i] = fmt.Sprintf("key-%d", i+1)
+					config.InitialKeys.KeyIDs[i] = fmt.Sprintf("key-%d", i+1)
 				}
 			}
 		}

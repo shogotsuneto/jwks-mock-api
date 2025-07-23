@@ -14,7 +14,10 @@ jwt:
   issuer: "http://localhost:3000"
   audience: "dev-api"
 
-keys:
+# Initial keys configuration
+# These keys are generated when the service starts.
+# Additional keys can be dynamically added/removed via the API endpoints.
+initial_keys:
   count: 2
   key_ids:
     - "key-1"

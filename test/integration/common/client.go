@@ -113,3 +113,36 @@ func (its *IntegrationTestSuite) MakeRequest(t *testing.T, method, endpoint stri
 	
 	return resp, respBody
 }
+
+// MakeRequestRaw is a helper to make HTTP requests with raw body data
+func (its *IntegrationTestSuite) MakeRequestRaw(t *testing.T, method, endpoint string, body []byte, headers map[string]string) (*http.Response, []byte) {
+	t.Helper()
+	
+	var reqBody io.Reader
+	if body != nil {
+		reqBody = bytes.NewReader(body)
+	}
+	
+	req, err := http.NewRequest(method, its.APIURL+endpoint, reqBody)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	
+	// Set custom headers
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+	
+	resp, err := its.HTTPClient.Do(req)
+	if err != nil {
+		t.Fatalf("Failed to make request to %s %s: %v", method, endpoint, err)
+	}
+	
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read response body: %v", err)
+	}
+	resp.Body.Close()
+	
+	return resp, respBody
+}

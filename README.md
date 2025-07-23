@@ -34,6 +34,8 @@ cd jwks-mock-api && make build && ./jwks-mock-api
 | POST | `/introspect` | OAuth 2.0 Token Introspection (RFC 7662) |
 | GET | `/health` | Health check |
 | GET | `/keys` | Available keys info |
+| POST | `/keys` | Add a new key |
+| DELETE | `/keys/{kid}` | Remove a key by ID |
 
 ## Configuration
 
@@ -114,6 +116,18 @@ curl -X POST http://localhost:3000/introspect \
 ```
 
 **Get JWKS:** `curl http://localhost:3000/.well-known/jwks.json`
+
+**Add Key:** 
+```bash
+curl -X POST http://localhost:3000/keys \
+  -H "Content-Type: application/json" \
+  -d '{"kid": "new-key-id"}'
+```
+
+**Remove Key:**
+```bash
+curl -X DELETE http://localhost:3000/keys/key-to-remove
+```
 
 ## Development
 
