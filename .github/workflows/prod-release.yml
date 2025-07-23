@@ -193,7 +193,7 @@ jobs:
         body_path: release_notes.md
         files: |
           dist/*
-        draft: false
+        draft: true
         prerelease: false
         
     - name: Output summary
