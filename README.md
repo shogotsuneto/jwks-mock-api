@@ -160,13 +160,46 @@ The project includes comprehensive Docker-based integration tests that validate 
 
 See `test/integration/README.md` for detailed testing documentation.
 
-## Development Release Pipeline
+## Release Pipelines
 
-This project includes an automated dev release pipeline that builds and publishes artifacts when code is pushed to the `develop` branch.
+This project includes two automated release pipelines for different stages of development:
 
-### Published Artifacts
+### Production Release Pipeline
 
-**Binary Artifacts:**
+Triggered by pushing version tags (e.g., `v1.0.0`, `v2.1.3-beta`), the production pipeline creates official releases with:
+
+**Multi-Platform Binaries:**
+- Linux AMD64 and ARM64
+- macOS AMD64 and ARM64 (Apple Silicon)
+- Windows AMD64
+- SHA256 checksums for integrity verification
+
+**Container Images:**
+- Multi-architecture Docker images (linux/amd64, linux/arm64)
+- Published to GitHub Container Registry
+- Tagged with version and `latest`
+
+**Usage:**
+```bash
+# Create a release
+git tag v1.0.0
+git push origin v1.0.0
+
+# Download and run binary
+curl -L -o jwks-mock-api https://github.com/shogotsuneto/jwks-mock-api/releases/download/v1.0.0/jwks-mock-api-v1.0.0-linux-amd64
+chmod +x jwks-mock-api
+./jwks-mock-api
+
+# Or use Docker
+docker pull ghcr.io/shogotsuneto/jwks-mock-api:1.0.0
+docker run -p 3000:3000 ghcr.io/shogotsuneto/jwks-mock-api:1.0.0
+```
+
+### Development Release Pipeline
+
+Builds development artifacts when code is pushed to the `develop` branch:
+
+**Published Artifacts:**
 - Linux x86_64 optimized binary available as GitHub Actions artifacts
 - Retention period: 30 days
 
