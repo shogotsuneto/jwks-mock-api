@@ -30,7 +30,7 @@ func New(cfg *config.Config) (*Server, error) {
 	keyManager := keys.NewManager()
 
 	// Generate keys based on configuration
-	keyIDs := cfg.Keys.KeyIDs
+	keyIDs := cfg.InitialKeys.KeyIDs
 
 	if err := keyManager.GenerateKeys(keyIDs); err != nil {
 		return nil, fmt.Errorf("failed to generate keys: %w", err)
