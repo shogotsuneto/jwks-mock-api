@@ -33,6 +33,40 @@ func NewManager() *Manager {
 	}
 }
 
+// generateKeyPair creates a new RSA key pair with the specified key ID
+func (m *Manager) generateKeyPair(kid string) (KeyPair, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return KeyPair{}, fmt.Errorf("failed to generate RSA key for %s: %w", kid, err)
+	}
+
+	// Create JWK from the private key
+	jwkKey, err := jwk.FromRaw(privateKey)
+	if err != nil {
+		return KeyPair{}, fmt.Errorf("failed to create JWK for %s: %w", kid, err)
+	}
+
+	// Set the key ID and algorithm
+	if err := jwkKey.Set(jwk.KeyIDKey, kid); err != nil {
+		return KeyPair{}, fmt.Errorf("failed to set key ID for %s: %w", kid, err)
+	}
+
+	if err := jwkKey.Set(jwk.AlgorithmKey, "RS256"); err != nil {
+		return KeyPair{}, fmt.Errorf("failed to set algorithm for %s: %w", kid, err)
+	}
+
+	if err := jwkKey.Set(jwk.KeyUsageKey, "sig"); err != nil {
+		return KeyPair{}, fmt.Errorf("failed to set key usage for %s: %w", kid, err)
+	}
+
+	return KeyPair{
+		Kid:        kid,
+		PrivateKey: privateKey,
+		PublicKey:  &privateKey.PublicKey,
+		JWK:        jwkKey,
+	}, nil
+}
+
 // GenerateKeys generates the specified number of RSA key pairs
 func (m *Manager) GenerateKeys(keyIDs []string) error {
 	m.mu.Lock()
@@ -41,37 +75,10 @@ func (m *Manager) GenerateKeys(keyIDs []string) error {
 	m.keys = make([]KeyPair, 0, len(keyIDs))
 
 	for _, kid := range keyIDs {
-		privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+		keyPair, err := m.generateKeyPair(kid)
 		if err != nil {
-			return fmt.Errorf("failed to generate RSA key for %s: %w", kid, err)
+			return err
 		}
-
-		// Create JWK from the private key
-		jwkKey, err := jwk.FromRaw(privateKey)
-		if err != nil {
-			return fmt.Errorf("failed to create JWK for %s: %w", kid, err)
-		}
-
-		// Set the key ID and algorithm
-		if err := jwkKey.Set(jwk.KeyIDKey, kid); err != nil {
-			return fmt.Errorf("failed to set key ID for %s: %w", kid, err)
-		}
-
-		if err := jwkKey.Set(jwk.AlgorithmKey, "RS256"); err != nil {
-			return fmt.Errorf("failed to set algorithm for %s: %w", kid, err)
-		}
-
-		if err := jwkKey.Set(jwk.KeyUsageKey, "sig"); err != nil {
-			return fmt.Errorf("failed to set key usage for %s: %w", kid, err)
-		}
-
-		keyPair := KeyPair{
-			Kid:        kid,
-			PrivateKey: privateKey,
-			PublicKey:  &privateKey.PublicKey,
-			JWK:        jwkKey,
-		}
-
 		m.keys = append(m.keys, keyPair)
 	}
 
@@ -165,35 +172,9 @@ func (m *Manager) AddKey(kid string) error {
 	}
 	
 	// Generate new key pair
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	keyPair, err := m.generateKeyPair(kid)
 	if err != nil {
-		return fmt.Errorf("failed to generate RSA key for %s: %w", kid, err)
-	}
-
-	// Create JWK from the private key
-	jwkKey, err := jwk.FromRaw(privateKey)
-	if err != nil {
-		return fmt.Errorf("failed to create JWK for %s: %w", kid, err)
-	}
-
-	// Set the key ID and algorithm
-	if err := jwkKey.Set(jwk.KeyIDKey, kid); err != nil {
-		return fmt.Errorf("failed to set key ID for %s: %w", kid, err)
-	}
-
-	if err := jwkKey.Set(jwk.AlgorithmKey, "RS256"); err != nil {
-		return fmt.Errorf("failed to set algorithm for %s: %w", kid, err)
-	}
-
-	if err := jwkKey.Set(jwk.KeyUsageKey, "sig"); err != nil {
-		return fmt.Errorf("failed to set key usage for %s: %w", kid, err)
-	}
-
-	keyPair := KeyPair{
-		Kid:        kid,
-		PrivateKey: privateKey,
-		PublicKey:  &privateKey.PublicKey,
-		JWK:        jwkKey,
+		return err
 	}
 
 	m.keys = append(m.keys, keyPair)
