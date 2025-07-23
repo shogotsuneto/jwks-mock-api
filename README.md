@@ -179,18 +179,7 @@ This project includes an automated dev release pipeline that builds and publishe
 
 The dev release pipeline requires the following repository configuration:
 
-1. **GitHub Container Registry Access**: 
-   - No additional setup needed - uses `GITHUB_TOKEN` with package write permissions
-   - Images are automatically published to `ghcr.io/<repository-owner>/<repository-name>`
-
-2. **Branch Protection** (Optional but recommended):
-   ```bash
-   # Create develop branch if it doesn't exist
-   git checkout -b develop
-   git push origin develop
-   ```
-
-3. **Access Published Images**:
+**Access Published Images**:
    ```bash
    # Pull latest dev image
    docker pull ghcr.io/shogotsuneto/jwks-mock-api:develop-latest

@@ -16,25 +16,7 @@ The dev release pipeline uses GitHub's built-in `GITHUB_TOKEN` and requires **no
 
 ## Quick Start
 
-### 1. Create Develop Branch
-
-```bash
-# Create and push develop branch (if it doesn't exist)
-git checkout -b develop
-git push origin develop
-```
-
-### 2. Push Changes to Trigger Pipeline
-
-```bash
-# Make a change and push to develop
-git checkout develop
-echo "# Trigger pipeline" >> README.md
-git add . && git commit -m "Trigger dev pipeline"
-git push origin develop
-```
-
-### 3. Access Published Artifacts
+### Access Published Artifacts
 
 **GitHub Artifacts** (Web UI):
 - Go to repository → Actions → Select workflow run
@@ -78,9 +60,8 @@ If you need to use a different container registry:
 ### Pipeline Failures
 
 **Common Issues**:
-1. **No develop branch**: Create the branch first
-2. **Build failures**: Check Go code builds locally with `make build`
-3. **Docker build issues**: Test locally with `make docker`
+1. **Build failures**: Check Go code builds locally with `make build`
+2. **Docker build issues**: Test locally with `make docker`
 
 **Debug Steps**:
 ```bash
