@@ -60,7 +60,22 @@ type JWK struct {
 
 // KeysResponse represents the response from keys endpoint  
 type KeysResponse struct {
-	Keys []KeyInfo `json:"keys"`
+	TotalKeys     int                      `json:"total_keys"`
+	AvailableKeys []map[string]interface{} `json:"available_keys"`
+}
+
+// AddKeyResponse represents the response from adding a key
+type AddKeyResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Kid     string `json:"kid"`
+}
+
+// RemoveKeyResponse represents the response from removing a key
+type RemoveKeyResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Kid     string `json:"kid"`
 }
 
 // KeyInfo represents information about a key

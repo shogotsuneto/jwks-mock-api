@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/gorilla/mux"
 	"github.com/shogotsuneto/jwks-mock-api/internal/keys"
 	"github.com/shogotsuneto/jwks-mock-api/pkg/config"
 )
@@ -430,6 +432,107 @@ func (h *Handler) Keys(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+// AddKeyRequest represents the structure expected for adding a new key
+type AddKeyRequest struct {
+	Kid string `json:"kid"`
+}
+
+// AddKeyResponse represents the response for adding a new key
+type AddKeyResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Kid     string `json:"kid"`
+}
+
+// AddKey handles POST /keys to add a new key
+func (h *Handler) AddKey(w http.ResponseWriter, r *http.Request) {
+	var request AddKeyRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(AddKeyResponse{
+			Success: false,
+			Message: "Invalid JSON request",
+		})
+		return
+	}
+
+	if request.Kid == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(AddKeyResponse{
+			Success: false,
+			Message: "Key ID (kid) is required",
+		})
+		return
+	}
+
+	if err := h.keyManager.AddKey(request.Kid); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(AddKeyResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(AddKeyResponse{
+		Success: true,
+		Message: "Key added successfully",
+		Kid:     request.Kid,
+	})
+}
+
+// RemoveKeyResponse represents the response for removing a key
+type RemoveKeyResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Kid     string `json:"kid"`
+}
+
+// RemoveKey handles DELETE /keys/{kid} to remove a key
+func (h *Handler) RemoveKey(w http.ResponseWriter, r *http.Request) {
+	// Extract kid from URL path using gorilla/mux
+	vars := mux.Vars(r)
+	kid := vars["kid"]
+	
+	if kid == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(RemoveKeyResponse{
+			Success: false,
+			Message: "Key ID (kid) is required",
+		})
+		return
+	}
+
+	if err := h.keyManager.RemoveKey(kid); err != nil {
+		statusCode := http.StatusNotFound
+		if strings.Contains(err.Error(), "at least one key must remain") {
+			statusCode = http.StatusBadRequest
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(statusCode)
+		json.NewEncoder(w).Encode(RemoveKeyResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(RemoveKeyResponse{
+		Success: true,
+		Message: "Key removed successfully",
+		Kid:     kid,
+	})
 }
 
 // CORS middleware

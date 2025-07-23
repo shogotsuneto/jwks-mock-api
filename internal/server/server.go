@@ -73,6 +73,8 @@ func (s *Server) Start() error {
 	log.Printf("Generate token: POST http://%s:%d/generate-token", s.config.Server.Host, s.config.Server.Port)
 	log.Printf("Generate invalid token: POST http://%s:%d/generate-invalid-token", s.config.Server.Host, s.config.Server.Port)
 	log.Printf("Keys info: GET http://%s:%d/keys", s.config.Server.Host, s.config.Server.Port)
+	log.Printf("Add key: POST http://%s:%d/keys", s.config.Server.Host, s.config.Server.Port)
+	log.Printf("Remove key: DELETE http://%s:%d/keys/{kid}", s.config.Server.Host, s.config.Server.Port)
 
 	// Start server in a goroutine
 	go func() {
@@ -107,6 +109,10 @@ func (s *Server) setupRoutes() *mux.Router {
 	// Health and info endpoints
 	router.HandleFunc("/health", s.handler.Health).Methods("GET", "OPTIONS")
 	router.HandleFunc("/keys", s.handler.Keys).Methods("GET", "OPTIONS")
+
+	// Key management endpoints
+	router.HandleFunc("/keys", s.handler.AddKey).Methods("POST", "OPTIONS")
+	router.HandleFunc("/keys/{kid}", s.handler.RemoveKey).Methods("DELETE", "OPTIONS")
 
 	return router
 }
