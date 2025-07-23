@@ -71,7 +71,7 @@ func (m *Manager) generateKeyPair(kid string) (KeyPair, error) {
 func (m *Manager) GenerateKeys(keyIDs []string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	m.keys = make([]KeyPair, 0, len(keyIDs))
 
 	for _, kid := range keyIDs {
@@ -89,7 +89,7 @@ func (m *Manager) GenerateKeys(keyIDs []string) error {
 func (m *Manager) GetRandomKey() (*KeyPair, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	if len(m.keys) == 0 {
 		return nil, fmt.Errorf("no keys available")
 	}
@@ -108,7 +108,7 @@ func (m *Manager) GetRandomKey() (*KeyPair, error) {
 func (m *Manager) GetKeyByID(kid string) (*KeyPair, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	for i := range m.keys {
 		if m.keys[i].Kid == kid {
 			return &m.keys[i], nil
@@ -121,7 +121,7 @@ func (m *Manager) GetKeyByID(kid string) (*KeyPair, error) {
 func (m *Manager) GetJWKS() (jwk.Set, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	set := jwk.NewSet()
 
 	for _, keyPair := range m.keys {
@@ -143,7 +143,7 @@ func (m *Manager) GetJWKS() (jwk.Set, error) {
 func (m *Manager) GetAllKeyIDs() []string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	keyIDs := make([]string, len(m.keys))
 	for i, key := range m.keys {
 		keyIDs[i] = key.Kid
@@ -155,7 +155,7 @@ func (m *Manager) GetAllKeyIDs() []string {
 func (m *Manager) GetKeyCount() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	return len(m.keys)
 }
 
@@ -163,14 +163,14 @@ func (m *Manager) GetKeyCount() int {
 func (m *Manager) AddKey(kid string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	// Check if key ID already exists
 	for _, key := range m.keys {
 		if key.Kid == kid {
 			return fmt.Errorf("key with ID %s already exists", kid)
 		}
 	}
-	
+
 	// Generate new key pair
 	keyPair, err := m.generateKeyPair(kid)
 	if err != nil {
@@ -185,12 +185,12 @@ func (m *Manager) AddKey(kid string) error {
 func (m *Manager) RemoveKey(kid string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	// Ensure at least one key remains
 	if len(m.keys) <= 1 {
 		return fmt.Errorf("cannot remove key: at least one key must remain")
 	}
-	
+
 	// Find and remove the key
 	for i, key := range m.keys {
 		if key.Kid == kid {
@@ -199,7 +199,7 @@ func (m *Manager) RemoveKey(kid string) error {
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("key not found: %s", kid)
 }
 

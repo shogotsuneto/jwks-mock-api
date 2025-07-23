@@ -500,7 +500,7 @@ func (h *Handler) RemoveKey(w http.ResponseWriter, r *http.Request) {
 	// Extract kid from URL path using gorilla/mux
 	vars := mux.Vars(r)
 	kid := vars["kid"]
-	
+
 	if kid == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -516,7 +516,7 @@ func (h *Handler) RemoveKey(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(err.Error(), "at least one key must remain") {
 			statusCode = http.StatusBadRequest
 		}
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(statusCode)
 		json.NewEncoder(w).Encode(RemoveKeyResponse{
