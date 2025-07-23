@@ -1,0 +1,19 @@
+# Build stage for integration tests
+FROM golang:1.23-alpine AS test-builder
+
+# Install ca-certificates and git
+RUN apk --no-cache add ca-certificates git
+
+WORKDIR /app
+
+# Copy only the integration test directory
+COPY test/integration/ ./
+
+# Download dependencies
+RUN go mod download
+
+# Create test results directory
+RUN mkdir -p /app/results
+
+# Run integration tests by default
+CMD ["go", "test", "-v", "-count=1", "./..."]

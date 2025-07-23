@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Main JWKS Mock API server
+  jwks-api:
+    build: .
+    ports:
+      - "3001:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - JWT_ISSUER=http://jwks-api:3000
+      - JWT_AUDIENCE=integration-test-api
+      - KEY_COUNT=3
+      - KEY_IDS=integration-key-1,integration-key-2,integration-key-3
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - test-network
+
+  # Integration test runner
+  integration-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.integration-tests
+    depends_on:
+      jwks-api:
+        condition: service_healthy
+    environment:
+      - JWKS_API_URL=http://jwks-api:3000
+      - TEST_TIMEOUT=30s
+    tty: true
+    networks:
+      - test-network
+
+
+
+networks:
+  test-network:
+    driver: bridge
+
+volumes:
+  test-results:

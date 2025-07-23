@@ -33,6 +33,45 @@ test-coverage:
 	@echo "Running tests with coverage..."
 	@go test -cover ./...
 
+
+
+# Run Docker-based integration tests
+test-integration:
+	@echo "🚀 Starting Docker Integration Tests..."
+	@echo "======================================="
+	@docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from integration-tests; \
+	EXIT_CODE=$$?; \
+	docker compose -f docker-compose.test.yml down; \
+	echo ""; \
+	echo "======================================="; \
+	if [ $$EXIT_CODE -eq 0 ]; then \
+		echo "🎉 Integration tests completed successfully!"; \
+		echo "✅ All tests passed"; \
+	else \
+		echo "💥 Integration tests failed!"; \
+		echo "❌ Some tests failed - check output above"; \
+	fi; \
+	echo "======================================="; \
+	exit $$EXIT_CODE
+
+# Run integration tests with external Docker setup (for local development)
+test-integration-external:
+	@echo "Starting JWKS API server for external testing..."
+	@docker compose -f docker-compose.test.yml up -d jwks-api
+	@echo "Waiting for server to be ready..."
+	@sleep 10
+	@echo "Running integration tests against external server..."
+	@JWKS_API_URL=http://localhost:3001 sh -c 'cd ./test/integration && go test -v ./...'
+	@echo "Cleaning up external test server..."
+	@docker compose -f docker-compose.test.yml down
+
+# Run all tests (integration only)
+test-all:
+	@echo "Running all tests..."
+	@$(MAKE) test-integration
+
+
+
 # Clean build artifacts
 clean:
 	@echo "Cleaning up..."
@@ -86,8 +125,11 @@ help:
 	@echo "  build-optimized - Build optimized binary (smaller size)"
 	@echo "  run             - Run the application"
 	@echo "  run-config      - Run with example config file"
-	@echo "  test            - Run tests"
+	@echo "  test            - Run basic tests"
 	@echo "  test-coverage   - Run tests with coverage"
+	@echo "  test-integration- Run Docker-based integration tests"
+	@echo "  test-integration-external - Run integration tests against external Docker server"
+	@echo "  test-all        - Run all tests (integration only)"
 	@echo "  clean           - Clean build artifacts"
 	@echo "  docker          - Build Docker image"
 	@echo "  docker-run      - Run Docker container"
