@@ -28,10 +28,20 @@ test:
 	@echo "Running tests..."
 	@go test ./...
 
+# Run unit tests only (excludes integration tests)
+test-unit:
+	@echo "Running unit tests..."
+	@go test ./pkg/... ./internal/... ./cmd/...
+
 # Test with coverage
 test-coverage:
 	@echo "Running tests with coverage..."
 	@go test -cover ./...
+
+# Run unit tests with coverage
+test-unit-coverage:
+	@echo "Running unit tests with coverage..."
+	@go test -cover ./pkg/... ./internal/... ./cmd/...
 
 
 
@@ -125,8 +135,10 @@ help:
 	@echo "  build-optimized - Build optimized binary (smaller size)"
 	@echo "  run             - Run the application"
 	@echo "  run-config      - Run with example config file"
-	@echo "  test            - Run basic tests"
-	@echo "  test-coverage   - Run tests with coverage"
+	@echo "  test            - Run all tests (unit + integration)"
+	@echo "  test-unit       - Run unit tests only"
+	@echo "  test-coverage   - Run all tests with coverage"
+	@echo "  test-unit-coverage - Run unit tests with coverage"
 	@echo "  test-integration- Run Docker-based integration tests"
 	@echo "  test-integration-external - Run integration tests against external Docker server"
 	@echo "  test-all        - Run all tests (integration only)"
