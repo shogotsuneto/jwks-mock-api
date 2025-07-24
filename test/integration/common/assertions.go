@@ -30,6 +30,18 @@ func AssertValidJWT(t *testing.T, tokenStr string) *jwt.Token {
 	return token
 }
 
+// ParseJWTWithoutValidation parses a JWT token without signature validation (for testing invalid tokens)
+func ParseJWTWithoutValidation(t *testing.T, tokenStr string) *jwt.Token {
+	t.Helper()
+	
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
+	if err != nil {
+		t.Fatalf("❌ JWT PARSE FAILED: %v", err)
+	}
+	
+	return token
+}
+
 // AssertJWTClaims validates specific claims in a JWT token
 func AssertJWTClaims(t *testing.T, token *jwt.Token, expectedClaims map[string]interface{}) {
 	t.Helper()

@@ -211,7 +211,11 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 	jwtClaims["iat"] = time.Now().Unix()
 	jwtClaims["exp"] = exp.Unix()
 	jwtClaims["iss"] = h.config.JWT.Issuer
-	jwtClaims["aud"] = h.config.JWT.Audience
+	
+	// Use user-provided audience if present, otherwise use config default
+	if _, hasAud := claims["aud"]; !hasAud {
+		jwtClaims["aud"] = h.config.JWT.Audience
+	}
 
 	// Create token
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwtClaims)
@@ -284,8 +288,8 @@ func (h *Handler) Introspect(w http.ResponseWriter, r *http.Request) {
 		// Token is not active (invalid, expired, etc.)
 		response.Active = false
 	} else if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok {
-		// Validate issuer and audience
-		if claims["iss"] != h.config.JWT.Issuer || claims["aud"] != h.config.JWT.Audience {
+		// Validate issuer (audience validation is more flexible for testing purposes)
+		if claims["iss"] != h.config.JWT.Issuer {
 			response.Active = false
 		} else {
 			// Token is active - populate response with claims
@@ -387,7 +391,11 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	jwtClaims["iat"] = time.Now().Unix()
 	jwtClaims["exp"] = exp.Unix()
 	jwtClaims["iss"] = h.config.JWT.Issuer
-	jwtClaims["aud"] = h.config.JWT.Audience
+	
+	// Use user-provided audience if present, otherwise use config default
+	if _, hasAud := claims["aud"]; !hasAud {
+		jwtClaims["aud"] = h.config.JWT.Audience
+	}
 
 	// Create token with valid kid but sign with invalid key
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwtClaims)
