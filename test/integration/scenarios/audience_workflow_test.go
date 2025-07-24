@@ -1,4 +1,4 @@
-package endpoints
+package scenarios
 
 import (
 	"fmt"
@@ -8,12 +8,13 @@ import (
 	"github.com/shogotsuneto/jwks-mock-api/test/integration/common"
 )
 
-// TestMultipleAudienceSupport tests multiple audience support in token generation
-func TestMultipleAudienceSupport(t *testing.T) {
+// TestAudienceWorkflow tests the complete audience workflow including token generation, 
+// validation, and introspection with custom and default audiences
+func TestAudienceWorkflow(t *testing.T) {
 	its := common.NewIntegrationTestSuite()
 	its.WaitForAPI(t)
 
-	t.Log("=== Starting Multiple Audience Support Test ===")
+	t.Log("=== Starting Audience Workflow Test ===")
 
 	// Test 1: Token generation with custom audience
 	t.Log("Testing token generation with custom audience...")
@@ -139,5 +140,5 @@ func TestMultipleAudienceSupport(t *testing.T) {
 
 	t.Log("✅ Invalid token with custom audience generated successfully")
 
-	t.Log("✅ Multiple audience support test completed successfully")
+	t.Log("✅ Audience Workflow Test completed successfully")
 }
