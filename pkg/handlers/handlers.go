@@ -22,6 +22,18 @@ type Handler struct {
 	keyManager *keys.Manager
 }
 
+// responseWriter wraps http.ResponseWriter to capture status code for access logging
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+// WriteHeader captures the status code
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
 // New creates a new handler instance
 func New(cfg *config.Config, keyManager *keys.Manager) *Handler {
 	return &Handler{
@@ -532,6 +544,51 @@ func (h *Handler) RemoveKey(w http.ResponseWriter, r *http.Request) {
 		Success: true,
 		Message: "Key removed successfully",
 		Kid:     kid,
+	})
+}
+
+// AccessLog middleware logs HTTP requests with basic access information
+func (h *Handler) AccessLog(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		
+		// Wrap the response writer to capture status code
+		wrapped := &responseWriter{
+			ResponseWriter: w,
+			statusCode:     200, // Default status code
+		}
+		
+		// Get client IP (check X-Forwarded-For first, then X-Real-IP, then RemoteAddr)
+		clientIP := r.Header.Get("X-Forwarded-For")
+		if clientIP == "" {
+			clientIP = r.Header.Get("X-Real-IP")
+		}
+		if clientIP == "" {
+			clientIP = r.RemoteAddr
+			// Remove port if present
+			if idx := strings.LastIndex(clientIP, ":"); idx != -1 {
+				clientIP = clientIP[:idx]
+			}
+		} else {
+			// X-Forwarded-For can contain multiple IPs, take the first one
+			if idx := strings.Index(clientIP, ","); idx != -1 {
+				clientIP = strings.TrimSpace(clientIP[:idx])
+			}
+		}
+		
+		// Process the request
+		next.ServeHTTP(wrapped, r)
+		
+		// Calculate duration
+		duration := time.Since(start)
+		
+		// Log the access information
+		logger.Infof("%s %s %d %s %v", 
+			r.Method,
+			r.URL.Path, 
+			wrapped.statusCode,
+			clientIP,
+			duration)
 	})
 }
 

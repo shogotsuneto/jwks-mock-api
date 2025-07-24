@@ -93,6 +93,9 @@ func (s *Server) Start() error {
 func (s *Server) setupRoutes() *mux.Router {
 	router := mux.NewRouter()
 
+	// Apply access logging middleware first
+	router.Use(s.handler.AccessLog)
+	
 	// Apply CORS middleware
 	router.Use(s.handler.CORS)
 
