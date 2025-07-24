@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
-	"log"
 
 	"github.com/shogotsuneto/jwks-mock-api/internal/server"
 	"github.com/shogotsuneto/jwks-mock-api/pkg/config"
+	"github.com/shogotsuneto/jwks-mock-api/pkg/logger"
 )
 
 func main() {
@@ -16,16 +16,20 @@ func main() {
 	// Load configuration
 	cfg, err := config.Load(configFile)
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		logger.Fatalf("Failed to load configuration: %v", err)
 	}
+
+	// Initialize logger with configured level
+	logger.Init(cfg.LogLevel)
+	logger.Debugf("Logger initialized with level: %s", cfg.LogLevel)
 
 	// Create and start server
 	srv, err := server.New(cfg)
 	if err != nil {
-		log.Fatalf("Failed to create server: %v", err)
+		logger.Fatalf("Failed to create server: %v", err)
 	}
 
 	if err := srv.Start(); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		logger.Fatalf("Failed to start server: %v", err)
 	}
 }
