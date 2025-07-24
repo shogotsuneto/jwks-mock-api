@@ -2,7 +2,7 @@ name: Pull Request Tests
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
   integration-tests:
