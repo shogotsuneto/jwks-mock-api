@@ -166,7 +166,7 @@ This project includes two automated release pipelines for different stages of de
 
 ### Production Release Pipeline
 
-Triggered by pushing version tags (e.g., `v1.0.0`, `v2.1.3-beta`), the production pipeline creates official releases with:
+Manually triggered through GitHub Actions UI, the production pipeline creates official releases with:
 
 **Multi-Platform Binaries:**
 - Linux AMD64 and ARM64
@@ -181,9 +181,11 @@ Triggered by pushing version tags (e.g., `v1.0.0`, `v2.1.3-beta`), the productio
 
 **Usage:**
 ```bash
-# Create a release
-git tag v1.0.0
-git push origin v1.0.0
+# Create a release via GitHub web UI:
+# 1. Go to Actions tab → Production Release Pipeline
+# 2. Click "Run workflow"
+# 3. Enter version (e.g., "1.0.0" or "v1.0.0")
+# 4. The workflow will validate the version, build artifacts, and create a draft release
 
 # Download and run binary
 curl -L -o jwks-mock-api https://github.com/shogotsuneto/jwks-mock-api/releases/download/v1.0.0/jwks-mock-api-v1.0.0-linux-amd64
