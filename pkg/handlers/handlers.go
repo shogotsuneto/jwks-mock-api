@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -14,12 +13,25 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/shogotsuneto/jwks-mock-api/internal/keys"
 	"github.com/shogotsuneto/jwks-mock-api/pkg/config"
+	"github.com/shogotsuneto/jwks-mock-api/pkg/logger"
 )
 
 // Handler contains the HTTP handlers for the JWKS service
 type Handler struct {
 	config     *config.Config
 	keyManager *keys.Manager
+}
+
+// responseWriter wraps http.ResponseWriter to capture status code for access logging
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+// WriteHeader captures the status code
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
 }
 
 // New creates a new handler instance
@@ -131,7 +143,7 @@ type KeysResponse struct {
 func (h *Handler) JWKS(w http.ResponseWriter, r *http.Request) {
 	jwks, err := h.keyManager.GetJWKS()
 	if err != nil {
-		log.Printf("Error generating JWKS: %v", err)
+		logger.Errorf("Error generating JWKS: %v", err)
 		http.Error(w, `{"error": "Failed to generate JWKS"}`, http.StatusInternalServerError)
 		return
 	}
@@ -140,7 +152,7 @@ func (h *Handler) JWKS(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 
 	if err := json.NewEncoder(w).Encode(jwks); err != nil {
-		log.Printf("Error encoding JWKS response: %v", err)
+		logger.Errorf("Error encoding JWKS response: %v", err)
 		http.Error(w, `{"error": "Failed to encode JWKS"}`, http.StatusInternalServerError)
 		return
 	}
@@ -181,7 +193,7 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 	// Get a random key for signing
 	keyPair, err := h.keyManager.GetRandomKey()
 	if err != nil {
-		log.Printf("Error getting random key: %v", err)
+		logger.Errorf("Error getting random key: %v", err)
 		http.Error(w, `{"error": "Failed to get signing key"}`, http.StatusInternalServerError)
 		return
 	}
@@ -199,7 +211,11 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 	jwtClaims["iat"] = time.Now().Unix()
 	jwtClaims["exp"] = exp.Unix()
 	jwtClaims["iss"] = h.config.JWT.Issuer
-	jwtClaims["aud"] = h.config.JWT.Audience
+	
+	// Use user-provided audience if present, otherwise use config default
+	if _, hasAud := claims["aud"]; !hasAud {
+		jwtClaims["aud"] = h.config.JWT.Audience
+	}
 
 	// Create token
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwtClaims)
@@ -208,7 +224,7 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 	// Sign token
 	tokenString, err := token.SignedString(keyPair.PrivateKey)
 	if err != nil {
-		log.Printf("Error signing token: %v", err)
+		logger.Errorf("Error signing token: %v", err)
 		http.Error(w, `{"error": "Failed to sign token"}`, http.StatusInternalServerError)
 		return
 	}
@@ -272,8 +288,8 @@ func (h *Handler) Introspect(w http.ResponseWriter, r *http.Request) {
 		// Token is not active (invalid, expired, etc.)
 		response.Active = false
 	} else if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok {
-		// Validate issuer and audience
-		if claims["iss"] != h.config.JWT.Issuer || claims["aud"] != h.config.JWT.Audience {
+		// Validate issuer (audience validation is more flexible for testing purposes)
+		if claims["iss"] != h.config.JWT.Issuer {
 			response.Active = false
 		} else {
 			// Token is active - populate response with claims
@@ -349,7 +365,7 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	// Get a valid key to use its kid
 	validKey, err := h.keyManager.GetRandomKey()
 	if err != nil {
-		log.Printf("Error getting random key: %v", err)
+		logger.Errorf("Error getting random key: %v", err)
 		http.Error(w, `{"error": "Failed to get signing key"}`, http.StatusInternalServerError)
 		return
 	}
@@ -357,7 +373,7 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	// Generate a temporary invalid key pair
 	invalidPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		log.Printf("Error generating invalid key: %v", err)
+		logger.Errorf("Error generating invalid key: %v", err)
 		http.Error(w, `{"error": "Failed to generate invalid key"}`, http.StatusInternalServerError)
 		return
 	}
@@ -375,7 +391,11 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	jwtClaims["iat"] = time.Now().Unix()
 	jwtClaims["exp"] = exp.Unix()
 	jwtClaims["iss"] = h.config.JWT.Issuer
-	jwtClaims["aud"] = h.config.JWT.Audience
+	
+	// Use user-provided audience if present, otherwise use config default
+	if _, hasAud := claims["aud"]; !hasAud {
+		jwtClaims["aud"] = h.config.JWT.Audience
+	}
 
 	// Create token with valid kid but sign with invalid key
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwtClaims)
@@ -384,7 +404,7 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	// Sign token with invalid key
 	tokenString, err := token.SignedString(invalidPrivateKey)
 	if err != nil {
-		log.Printf("Error signing invalid token: %v", err)
+		logger.Errorf("Error signing invalid token: %v", err)
 		http.Error(w, `{"error": "Failed to sign invalid token"}`, http.StatusInternalServerError)
 		return
 	}
@@ -532,6 +552,51 @@ func (h *Handler) RemoveKey(w http.ResponseWriter, r *http.Request) {
 		Success: true,
 		Message: "Key removed successfully",
 		Kid:     kid,
+	})
+}
+
+// AccessLog middleware logs HTTP requests with basic access information
+func (h *Handler) AccessLog(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		
+		// Wrap the response writer to capture status code
+		wrapped := &responseWriter{
+			ResponseWriter: w,
+			statusCode:     200, // Default status code
+		}
+		
+		// Get client IP (check X-Forwarded-For first, then X-Real-IP, then RemoteAddr)
+		clientIP := r.Header.Get("X-Forwarded-For")
+		if clientIP == "" {
+			clientIP = r.Header.Get("X-Real-IP")
+		}
+		if clientIP == "" {
+			clientIP = r.RemoteAddr
+			// Remove port if present
+			if idx := strings.LastIndex(clientIP, ":"); idx != -1 {
+				clientIP = clientIP[:idx]
+			}
+		} else {
+			// X-Forwarded-For can contain multiple IPs, take the first one
+			if idx := strings.Index(clientIP, ","); idx != -1 {
+				clientIP = strings.TrimSpace(clientIP[:idx])
+			}
+		}
+		
+		// Process the request
+		next.ServeHTTP(wrapped, r)
+		
+		// Calculate duration
+		duration := time.Since(start)
+		
+		// Log the access information
+		logger.Infof("%s %s %d %s %v", 
+			r.Method,
+			r.URL.Path, 
+			wrapped.statusCode,
+			clientIP,
+			duration)
 	})
 }
 

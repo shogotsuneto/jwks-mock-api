@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,6 +13,7 @@ import (
 	"github.com/shogotsuneto/jwks-mock-api/internal/keys"
 	"github.com/shogotsuneto/jwks-mock-api/pkg/config"
 	"github.com/shogotsuneto/jwks-mock-api/pkg/handlers"
+	"github.com/shogotsuneto/jwks-mock-api/pkg/logger"
 )
 
 // Server represents the JWKS mock server
@@ -60,26 +60,26 @@ func (s *Server) Start() error {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	log.Printf("Environment variables:")
-	log.Printf("JWT_AUDIENCE: %s", s.config.JWT.Audience)
-	log.Printf("JWT_ISSUER: %s", s.config.JWT.Issuer)
-	log.Printf("PORT: %d", s.config.Server.Port)
-	log.Printf("HOST: %s", s.config.Server.Host)
+	logger.Infof("Environment variables:")
+	logger.Infof("JWT_AUDIENCE: %s", s.config.JWT.Audience)
+	logger.Infof("JWT_ISSUER: %s", s.config.JWT.Issuer)
+	logger.Infof("PORT: %d", s.config.Server.Port)
+	logger.Infof("HOST: %s", s.config.Server.Host)
 
-	log.Printf("Keys initialized successfully: %v", s.keyManager.GetAllKeyIDs())
-	log.Printf("JWT Dev Service starting on %s", s.server.Addr)
-	log.Printf("Available keys: %v", s.keyManager.GetAllKeyIDs())
-	log.Printf("JWKS endpoint: http://%s:%d/.well-known/jwks.json", s.config.Server.Host, s.config.Server.Port)
-	log.Printf("Generate token: POST http://%s:%d/generate-token", s.config.Server.Host, s.config.Server.Port)
-	log.Printf("Generate invalid token: POST http://%s:%d/generate-invalid-token", s.config.Server.Host, s.config.Server.Port)
-	log.Printf("Keys info: GET http://%s:%d/keys", s.config.Server.Host, s.config.Server.Port)
-	log.Printf("Add key: POST http://%s:%d/keys", s.config.Server.Host, s.config.Server.Port)
-	log.Printf("Remove key: DELETE http://%s:%d/keys/{kid}", s.config.Server.Host, s.config.Server.Port)
+	logger.Infof("Keys initialized successfully: %v", s.keyManager.GetAllKeyIDs())
+	logger.Infof("JWT Dev Service starting on %s", s.server.Addr)
+	logger.Infof("Available keys: %v", s.keyManager.GetAllKeyIDs())
+	logger.Infof("JWKS endpoint: http://%s:%d/.well-known/jwks.json", s.config.Server.Host, s.config.Server.Port)
+	logger.Infof("Generate token: POST http://%s:%d/generate-token", s.config.Server.Host, s.config.Server.Port)
+	logger.Infof("Generate invalid token: POST http://%s:%d/generate-invalid-token", s.config.Server.Host, s.config.Server.Port)
+	logger.Infof("Keys info: GET http://%s:%d/keys", s.config.Server.Host, s.config.Server.Port)
+	logger.Infof("Add key: POST http://%s:%d/keys", s.config.Server.Host, s.config.Server.Port)
+	logger.Infof("Remove key: DELETE http://%s:%d/keys/{kid}", s.config.Server.Host, s.config.Server.Port)
 
 	// Start server in a goroutine
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start server: %v", err)
+			logger.Fatalf("Failed to start server: %v", err)
 		}
 	}()
 
@@ -93,6 +93,9 @@ func (s *Server) Start() error {
 func (s *Server) setupRoutes() *mux.Router {
 	router := mux.NewRouter()
 
+	// Apply access logging middleware first
+	router.Use(s.handler.AccessLog)
+	
 	// Apply CORS middleware
 	router.Use(s.handler.CORS)
 
@@ -123,14 +126,14 @@ func (s *Server) waitForShutdown() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	<-quit
-	log.Println("Received shutdown signal. Gracefully shutting down...")
+	logger.Info("Received shutdown signal. Gracefully shutting down...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := s.server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		logger.Fatalf("Server forced to shutdown: %v", err)
 	}
 
-	log.Println("HTTP server shutdown completed")
+	logger.Info("HTTP server shutdown completed")
 }
