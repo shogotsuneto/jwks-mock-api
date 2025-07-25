@@ -1,8 +1,12 @@
 name: Production Release Pipeline
 
 on:
-  push:
-    tags: [ v* ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.2.3)'
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -46,14 +50,43 @@ jobs:
         go mod verify
         go vet ./...
         
-    - name: Extract version info
+    - name: Validate and extract version info
       id: version
       run: |
-        VERSION=${GITHUB_REF#refs/tags/}
+        VERSION="${{ github.event.inputs.version }}"
+        
+        # Validate version format (should be vX.Y.Z or X.Y.Z)
+        if [[ ! "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "❌ Invalid version format: $VERSION"
+          echo "Version must be in format vX.Y.Z or X.Y.Z (e.g., v1.2.3 or 1.2.3)"
+          exit 1
+        fi
+        
+        # Ensure version starts with 'v'
+        if [[ ! "$VERSION" =~ ^v ]]; then
+          VERSION="v${VERSION}"
+        fi
+        
+        # Check if tag already exists
+        if git rev-parse --verify "refs/tags/${VERSION}" >/dev/null 2>&1; then
+          echo "❌ Tag ${VERSION} already exists"
+          echo "Please choose a different version number"
+          exit 1
+        fi
+        
+        echo "✅ Version validation passed: $VERSION"
+        
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "version_clean=${VERSION#v}" >> $GITHUB_OUTPUT
         echo "commit_sha=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
         echo "build_date=$(date -u '+%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+        
+    - name: Create and push tag
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag -a ${{ steps.version.outputs.version }} -m "Release ${{ steps.version.outputs.version }}"
+        git push origin ${{ steps.version.outputs.version }}
         
     - name: Build multi-platform binaries
       run: |
