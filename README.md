@@ -15,11 +15,19 @@ A lightweight mock JSON Web Key Set (JWKS) service for backend API development a
 
 ## Quick Start
 
-```bash
-# Docker (Recommended)
-docker run -p 3000:3000 jwks-mock-api:latest
+### Docker (Recommended)
 
-# Or build from source
+```bash
+# Run the latest published image
+docker run -p 3000:3000 ghcr.io/shogotsuneto/jwks-mock-api:latest
+
+# Or use Docker Compose (see docker-compose.yml)
+docker-compose up
+```
+
+### Build from Source
+
+```bash
 git clone https://github.com/shogotsuneto/jwks-mock-api.git
 cd jwks-mock-api && make build && ./jwks-mock-api
 ```
@@ -59,6 +67,101 @@ keys:
 ```
 
 Run with: `./jwks-mock-api -config config.yaml`
+
+## Docker Usage
+
+### Container Images
+
+**Published Images (GitHub Container Registry):**
+- `ghcr.io/shogotsuneto/jwks-mock-api:latest` - Latest stable release
+- `ghcr.io/shogotsuneto/jwks-mock-api:v1.x.x` - Specific version
+- `ghcr.io/shogotsuneto/jwks-mock-api:develop-latest` - Latest development build
+
+### Basic Usage
+
+```bash
+# Run with default settings
+docker run -p 3000:3000 ghcr.io/shogotsuneto/jwks-mock-api:latest
+
+# Run with custom environment variables
+docker run -p 3000:3000 \
+  -e JWT_ISSUER=http://localhost:3000 \
+  -e JWT_AUDIENCE=my-api \
+  -e KEY_COUNT=3 \
+  -e KEY_IDS=key-1,key-2,key-3 \
+  ghcr.io/shogotsuneto/jwks-mock-api:latest
+
+# Run with config file (volume mount)
+docker run -p 3000:3000 \
+  -v $(pwd)/config.yaml:/config.yaml \
+  ghcr.io/shogotsuneto/jwks-mock-api:latest -config /config.yaml
+```
+
+### Docker Compose
+
+Create a `docker-compose.yml` file:
+
+```yaml
+services:
+  jwks-mock-api:
+    image: ghcr.io/shogotsuneto/jwks-mock-api:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - JWT_ISSUER=http://localhost:3000
+      - JWT_AUDIENCE=my-api
+      - KEY_COUNT=2
+      - KEY_IDS=key-1,key-2
+    # Healthcheck using wget (curl is not available)
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Example: API service using JWKS for token validation
+  # api-service:
+  #   image: your-api:latest
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - JWKS_URL=http://jwks-mock-api:3000/.well-known/jwks.json
+  #   depends_on:
+  #     jwks-mock-api:
+  #       condition: service_healthy
+
+networks:
+  default:
+    name: jwks-network
+```
+
+Run with: `docker compose up`
+
+### Important Notes
+
+- **Alpine-based**: The container uses Alpine Linux for minimal size (~10MB)
+- **No curl**: The container doesn't include `curl`. Use `wget` or `nc` for healthchecks
+- **Non-root user**: Runs as unprivileged user `appuser` for security
+- **Static binary**: Self-contained binary with no external dependencies
+
+### Healthcheck Alternatives
+
+Since `curl` is not available, use these alternatives:
+
+```bash
+# Using wget (recommended)
+wget --quiet --tries=1 --spider http://localhost:3000/health
+
+# Using netcat
+nc -z localhost 3000
+
+# Using simple HTTP request
+echo -e "GET /health HTTP/1.1\r\nHost: localhost\r\n\r\n" | nc localhost 3000
+```
 
 ## Dynamic Claims Support
 
@@ -142,8 +245,9 @@ make test-integration-external  # Integration tests with external server
 make test-coverage          # With coverage
 
 # Docker
-make docker                 # Build image
+make docker                 # Build local image
 make docker-run            # Run container
+docker run -p 3000:3000 ghcr.io/shogotsuneto/jwks-mock-api:latest  # Run published image
 
 # Code quality
 make fmt && make vet       # Format and vet
