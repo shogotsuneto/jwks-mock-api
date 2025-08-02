@@ -78,6 +78,29 @@ curl -X POST http://localhost:3000/generate-token \
 
 > **Note:** Standard JWT fields (`iat`, `exp`, `iss`, `aud`) are automatically added. The `expiresIn` field (in seconds) controls token expiration and is not included as a claim.
 
+## Other Examples
+
+**Introspect Token (OAuth 2.0 RFC 7662):**
+```bash
+curl -X POST http://localhost:3000/introspect \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "token=eyJhbGciOiJSUzI1NiIs..."
+```
+
+**Get JWKS:** `curl http://localhost:3000/.well-known/jwks.json`
+
+**Add Key:** 
+```bash
+curl -X POST http://localhost:3000/keys \
+  -H "Content-Type: application/json" \
+  -d '{"kid": "new-key-id"}'
+```
+
+**Remove Key:**
+```bash
+curl -X DELETE http://localhost:3000/keys/key-to-remove
+```
+
 ## API Endpoints
 
 | Method | Path | Description |
@@ -155,29 +178,6 @@ nc -z localhost 3000
 
 # Using simple HTTP request
 echo -e "GET /health HTTP/1.1\r\nHost: localhost\r\n\r\n" | nc localhost 3000
-```
-
-## Other Examples
-
-**Introspect Token (OAuth 2.0 RFC 7662):**
-```bash
-curl -X POST http://localhost:3000/introspect \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "token=eyJhbGciOiJSUzI1NiIs..."
-```
-
-**Get JWKS:** `curl http://localhost:3000/.well-known/jwks.json`
-
-**Add Key:** 
-```bash
-curl -X POST http://localhost:3000/keys \
-  -H "Content-Type: application/json" \
-  -d '{"kid": "new-key-id"}'
-```
-
-**Remove Key:**
-```bash
-curl -X DELETE http://localhost:3000/keys/key-to-remove
 ```
 
 ## Development
