@@ -32,6 +32,52 @@ git clone https://github.com/shogotsuneto/jwks-mock-api.git
 cd jwks-mock-api && make build && ./jwks-mock-api
 ```
 
+## Dynamic Claims Support
+
+**The `/generate-token` endpoint accepts a structured request with claims nested under a `claims` key.** This separates configuration options (like `expiresIn`) from actual JWT claims, enabling flexible token generation for various testing scenarios.
+
+### Examples
+
+**Basic Token:**
+```bash
+curl -X POST http://localhost:3000/generate-token \
+  -H "Content-Type: application/json" \
+  -d '{"claims": {"sub": "user123", "role": "admin"}}'
+```
+
+**Complex Claims:**
+```bash
+curl -X POST http://localhost:3000/generate-token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "claims": {
+      "sub": "user123",
+      "profile": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "department": "Engineering"
+      },
+      "permissions": ["read", "write", "admin"],
+      "metadata": {
+        "loginCount": 42,
+        "lastLogin": "2024-01-15T10:30:00Z"
+      }
+    },
+    "expiresIn": 3600
+  }'
+```
+
+**Response Format:**
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtleS0xIiwidHlwIjoiSldUIn0...",
+  "expires_in": 3600,
+  "key_id": "key-1"
+}
+```
+
+> **Note:** Standard JWT fields (`iat`, `exp`, `iss`, `aud`) are automatically added. The `expiresIn` field (in seconds) controls token expiration and is not included as a claim.
+
 ## API Endpoints
 
 | Method | Path | Description |
@@ -111,53 +157,7 @@ nc -z localhost 3000
 echo -e "GET /health HTTP/1.1\r\nHost: localhost\r\n\r\n" | nc localhost 3000
 ```
 
-## Dynamic Claims Support
-
-**The `/generate-token` endpoint accepts a structured request with claims nested under a `claims` key.** This separates configuration options (like `expiresIn`) from actual JWT claims, enabling flexible token generation for various testing scenarios.
-
-### Examples
-
-**Basic Token:**
-```bash
-curl -X POST http://localhost:3000/generate-token \
-  -H "Content-Type: application/json" \
-  -d '{"claims": {"sub": "user123", "role": "admin"}}'
-```
-
-**Complex Claims:**
-```bash
-curl -X POST http://localhost:3000/generate-token \
-  -H "Content-Type: application/json" \
-  -d '{
-    "claims": {
-      "sub": "user123",
-      "profile": {
-        "name": "John Doe",
-        "email": "john@example.com",
-        "department": "Engineering"
-      },
-      "permissions": ["read", "write", "admin"],
-      "metadata": {
-        "loginCount": 42,
-        "lastLogin": "2024-01-15T10:30:00Z"
-      }
-    },
-    "expiresIn": 3600
-  }'
-```
-
-**Response Format:**
-```json
-{
-  "access_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtleS0xIiwidHlwIjoiSldUIn0...",
-  "expires_in": 3600,
-  "key_id": "key-1"
-}
-```
-
-> **Note:** Standard JWT fields (`iat`, `exp`, `iss`, `aud`) are automatically added. The `expiresIn` field (in seconds) controls token expiration and is not included as a claim.
-
-### Other Examples
+## Other Examples
 
 **Introspect Token (OAuth 2.0 RFC 7662):**
 ```bash
