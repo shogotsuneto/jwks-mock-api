@@ -11,13 +11,16 @@ services:
       - JWT_AUDIENCE=my-api
       - KEY_COUNT=2
       - KEY_IDS=key-1,key-2
-    # Alternative healthcheck using wget (curl is not available in Alpine container)
+    # Healthcheck options (curl is not available in Alpine container):
+    # Option 1: wget (recommended)
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
+    # Option 2: netcat - test: ["CMD", "nc", "-z", "localhost", "3000"]
+    # Option 3: HTTP request - test: ["CMD", "sh", "-c", "echo -e 'GET /health HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n' | nc localhost 3000"]
     restart: unless-stopped
 
   # Example: Another service that needs JWT validation

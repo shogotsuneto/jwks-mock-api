@@ -158,28 +158,6 @@ docker run -p 3000:3000 \
   ghcr.io/shogotsuneto/jwks-mock-api:latest -config /config.yaml
 ```
 
-### Important Notes
-
-- **Alpine-based**: The container uses Alpine Linux for minimal size (~10MB)
-- **No curl**: The container doesn't include `curl`. Use `wget` or `nc` for healthchecks
-- **Non-root user**: Runs as unprivileged user `appuser` for security
-- **Static binary**: Self-contained binary with no external dependencies
-
-### Healthcheck Alternatives
-
-Since `curl` is not available, use these alternatives:
-
-```bash
-# Using wget (recommended)
-wget --quiet --tries=1 --spider http://localhost:3000/health
-
-# Using netcat
-nc -z localhost 3000
-
-# Using simple HTTP request
-echo -e "GET /health HTTP/1.1\r\nHost: localhost\r\n\r\n" | nc localhost 3000
-```
-
 ## Development
 
 ```bash
