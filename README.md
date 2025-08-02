@@ -13,6 +13,19 @@ A lightweight mock JSON Web Key Set (JWKS) service for backend API development a
 - **🐳 Docker Ready**: Small container image for easy deployment
 - **🧪 Testing Support**: Generate both valid and invalid tokens for comprehensive testing
 
+## API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/.well-known/jwks.json` | Standard JWKS endpoint |
+| POST | `/generate-token` | Generate JWT with **dynamic claims** |
+| POST | `/generate-invalid-token` | Invalid token for testing |
+| POST | `/introspect` | OAuth 2.0 Token Introspection (RFC 7662) |
+| GET | `/health` | Health check |
+| GET | `/keys` | Available keys info |
+| POST | `/keys` | Add a new key |
+| DELETE | `/keys/{kid}` | Remove a key by ID |
+
 ## Quick Start
 
 ### Docker (Recommended)
@@ -100,19 +113,6 @@ curl -X POST http://localhost:3000/keys \
 ```bash
 curl -X DELETE http://localhost:3000/keys/key-to-remove
 ```
-
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/.well-known/jwks.json` | Standard JWKS endpoint |
-| POST | `/generate-token` | Generate JWT with **dynamic claims** |
-| POST | `/generate-invalid-token` | Invalid token for testing |
-| POST | `/introspect` | OAuth 2.0 Token Introspection (RFC 7662) |
-| GET | `/health` | Health check |
-| GET | `/keys` | Available keys info |
-| POST | `/keys` | Add a new key |
-| DELETE | `/keys/{kid}` | Remove a key by ID |
 
 ## Configuration
 
