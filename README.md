@@ -13,17 +13,6 @@ A lightweight mock JSON Web Key Set (JWKS) service for backend API development a
 - **🐳 Docker Ready**: Small container image for easy deployment
 - **🧪 Testing Support**: Generate both valid and invalid tokens for comprehensive testing
 
-## Quick Start
-
-```bash
-# Docker (Recommended)
-docker run -p 3000:3000 jwks-mock-api:latest
-
-# Or build from source
-git clone https://github.com/shogotsuneto/jwks-mock-api.git
-cd jwks-mock-api && make build && ./jwks-mock-api
-```
-
 ## API Endpoints
 
 | Method | Path | Description |
@@ -37,28 +26,24 @@ cd jwks-mock-api && make build && ./jwks-mock-api
 | POST | `/keys` | Add a new key |
 | DELETE | `/keys/{kid}` | Remove a key by ID |
 
-## Configuration
+## Quick Start
 
-**Environment Variables:**
-- `PORT=3000` - Server port
-- `JWT_ISSUER=http://localhost:3000` - JWT issuer
-- `JWT_AUDIENCE=dev-api` - JWT audience  
-- `KEY_COUNT=2` - Number of RSA key pairs
-- `KEY_IDS=key-1,key-2` - Comma-separated key IDs
+### Docker (Recommended)
 
-**Config File:** Create `config.yaml` (see `config.yaml.example`):
-```yaml
-server:
-  port: 3000
-jwt:
-  issuer: "http://localhost:3000"
-  audience: "dev-api"
-keys:
-  count: 2
-  key_ids: ["key-1", "key-2"]
+```bash
+# Run the latest published image
+docker run -p 3000:3000 ghcr.io/shogotsuneto/jwks-mock-api:latest
+
+# Or use Docker Compose (see docker-compose.yml)
+docker-compose up
 ```
 
-Run with: `./jwks-mock-api -config config.yaml`
+### Build from Source
+
+```bash
+git clone https://github.com/shogotsuneto/jwks-mock-api.git
+cd jwks-mock-api && make build && ./jwks-mock-api
+```
 
 ## Dynamic Claims Support
 
@@ -106,7 +91,7 @@ curl -X POST http://localhost:3000/generate-token \
 
 > **Note:** Standard JWT fields (`iat`, `exp`, `iss`, `aud`) are automatically added. The `expiresIn` field (in seconds) controls token expiration and is not included as a claim.
 
-### Other Examples
+## Other Examples
 
 **Introspect Token (OAuth 2.0 RFC 7662):**
 ```bash
@@ -129,6 +114,50 @@ curl -X POST http://localhost:3000/keys \
 curl -X DELETE http://localhost:3000/keys/key-to-remove
 ```
 
+## Configuration
+
+**Environment Variables:**
+- `PORT=3000` - Server port
+- `JWT_ISSUER=http://localhost:3000` - JWT issuer
+- `JWT_AUDIENCE=dev-api` - JWT audience  
+- `KEY_COUNT=2` - Number of RSA key pairs
+- `KEY_IDS=key-1,key-2` - Comma-separated key IDs
+
+**Config File:** Create `config.yaml` (see `config.yaml.example`):
+```yaml
+server:
+  port: 3000
+jwt:
+  issuer: "http://localhost:3000"
+  audience: "dev-api"
+keys:
+  count: 2
+  key_ids: ["key-1", "key-2"]
+```
+
+Run with: `./jwks-mock-api -config config.yaml`
+
+## Docker Usage
+
+### Container Images
+
+**Published Images (GitHub Container Registry):**
+- `ghcr.io/shogotsuneto/jwks-mock-api:latest` - Latest stable release
+- `ghcr.io/shogotsuneto/jwks-mock-api:v1.x.x` - Specific version
+- `ghcr.io/shogotsuneto/jwks-mock-api:develop-latest` - Latest development build
+
+### Basic Usage
+
+```bash
+# Run with default settings
+docker run -p 3000:3000 ghcr.io/shogotsuneto/jwks-mock-api:latest
+
+# Run with config file (volume mount)
+docker run -p 3000:3000 \
+  -v $(pwd)/config.yaml:/config.yaml \
+  ghcr.io/shogotsuneto/jwks-mock-api:latest -config /config.yaml
+```
+
 ## Development
 
 ```bash
@@ -142,7 +171,7 @@ make test-integration-external  # Integration tests with external server
 make test-coverage          # With coverage
 
 # Docker
-make docker                 # Build image
+make docker                 # Build local image
 make docker-run            # Run container
 
 # Code quality
