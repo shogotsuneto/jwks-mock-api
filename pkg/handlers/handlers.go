@@ -149,7 +149,9 @@ func (h *Handler) JWKS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "public, max-age=3600")
+	if h.config.JWKS.CacheControl != "" {
+		w.Header().Set("Cache-Control", h.config.JWKS.CacheControl)
+	}
 
 	if err := json.NewEncoder(w).Encode(jwks); err != nil {
 		logger.Errorf("Error encoding JWKS response: %v", err)
