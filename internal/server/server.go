@@ -95,7 +95,7 @@ func (s *Server) setupRoutes() *mux.Router {
 
 	// Apply access logging middleware first
 	router.Use(s.handler.AccessLog)
-	
+
 	// Apply CORS middleware
 	router.Use(s.handler.CORS)
 
