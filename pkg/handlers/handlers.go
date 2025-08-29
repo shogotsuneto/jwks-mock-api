@@ -149,7 +149,9 @@ func (h *Handler) JWKS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "public, max-age=3600")
+	if h.config.JWKS.CacheControl != "" {
+		w.Header().Set("Cache-Control", h.config.JWKS.CacheControl)
+	}
 
 	if err := json.NewEncoder(w).Encode(jwks); err != nil {
 		logger.Errorf("Error encoding JWKS response: %v", err)
@@ -211,7 +213,7 @@ func (h *Handler) GenerateToken(w http.ResponseWriter, r *http.Request) {
 	jwtClaims["iat"] = time.Now().Unix()
 	jwtClaims["exp"] = exp.Unix()
 	jwtClaims["iss"] = h.config.JWT.Issuer
-	
+
 	// Use user-provided audience if present, otherwise use config default
 	if _, hasAud := claims["aud"]; !hasAud {
 		jwtClaims["aud"] = h.config.JWT.Audience
@@ -391,7 +393,7 @@ func (h *Handler) GenerateInvalidToken(w http.ResponseWriter, r *http.Request) {
 	jwtClaims["iat"] = time.Now().Unix()
 	jwtClaims["exp"] = exp.Unix()
 	jwtClaims["iss"] = h.config.JWT.Issuer
-	
+
 	// Use user-provided audience if present, otherwise use config default
 	if _, hasAud := claims["aud"]; !hasAud {
 		jwtClaims["aud"] = h.config.JWT.Audience
@@ -559,13 +561,13 @@ func (h *Handler) RemoveKey(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AccessLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		
+
 		// Wrap the response writer to capture status code
 		wrapped := &responseWriter{
 			ResponseWriter: w,
 			statusCode:     200, // Default status code
 		}
-		
+
 		// Get client IP (check X-Forwarded-For first, then X-Real-IP, then RemoteAddr)
 		clientIP := r.Header.Get("X-Forwarded-For")
 		if clientIP == "" {
@@ -583,17 +585,17 @@ func (h *Handler) AccessLog(next http.Handler) http.Handler {
 				clientIP = strings.TrimSpace(clientIP[:idx])
 			}
 		}
-		
+
 		// Process the request
 		next.ServeHTTP(wrapped, r)
-		
+
 		// Calculate duration
 		duration := time.Since(start)
-		
+
 		// Log the access information
-		logger.Infof("%s %s %d %s %v", 
+		logger.Infof("%s %s %d %s %v",
 			r.Method,
-			r.URL.Path, 
+			r.URL.Path,
 			wrapped.statusCode,
 			clientIP,
 			duration)

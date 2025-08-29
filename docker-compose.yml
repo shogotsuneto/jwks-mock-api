@@ -1,0 +1,40 @@
+services:
+  jwks-mock-api:
+    # Use the official published image from GitHub Container Registry
+    image: ghcr.io/shogotsuneto/jwks-mock-api:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - JWT_ISSUER=http://localhost:3000
+      - JWT_AUDIENCE=my-api
+      - KEY_COUNT=2
+      - KEY_IDS=key-1,key-2
+    # Healthcheck options (curl is not available in Alpine container):
+    # Option 1: wget (recommended)
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # Option 2: netcat - test: ["CMD", "nc", "-z", "localhost", "3000"]
+    # Option 3: HTTP request - test: ["CMD", "sh", "-c", "echo -e 'GET /health HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n' | nc localhost 3000"]
+    restart: unless-stopped
+
+  # Example: Another service that needs JWT validation
+  # api-service:
+  #   image: your-api:latest
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - JWKS_URL=http://jwks-mock-api:3000/.well-known/jwks.json
+  #   depends_on:
+  #     jwks-mock-api:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+networks:
+  default:
+    name: jwks-network
