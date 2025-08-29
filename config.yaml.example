@@ -14,6 +14,13 @@ jwt:
   issuer: "http://localhost:3000"
   audience: "dev-api"
 
+# JWKS endpoint configuration
+jwks:
+  # Cache-Control header value for JWKS endpoint responses
+  # Can be overridden with JWKS_CACHE_CONTROL environment variable
+  # Examples: "public, max-age=3600", "no-cache", "private, max-age=300"
+  cache_control: "public, max-age=3600"
+
 # Logging configuration
 # Supported levels: debug, info, warn, error
 # Can be overridden with LOG_LEVEL environment variable

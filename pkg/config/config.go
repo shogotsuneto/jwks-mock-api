@@ -13,6 +13,7 @@ import (
 type Config struct {
 	Server      ServerConfig      `yaml:"server"`
 	JWT         JWTConfig         `yaml:"jwt"`
+	JWKS        JWKSConfig        `yaml:"jwks"`
 	InitialKeys InitialKeysConfig `yaml:"initial_keys"`
 	LogLevel    string            `yaml:"log_level"`
 }
@@ -27,6 +28,11 @@ type ServerConfig struct {
 type JWTConfig struct {
 	Issuer   string `yaml:"issuer"`
 	Audience string `yaml:"audience"`
+}
+
+// JWKSConfig holds JWKS endpoint configuration
+type JWKSConfig struct {
+	CacheControl string `yaml:"cache_control"`
 }
 
 // InitialKeysConfig holds initial key generation configuration
@@ -46,6 +52,9 @@ func Load(configFile string) (*Config, error) {
 		JWT: JWTConfig{
 			Issuer:   "http://localhost:3000",
 			Audience: "dev-api",
+		},
+		JWKS: JWKSConfig{
+			CacheControl: "public, max-age=3600",
 		},
 		InitialKeys: InitialKeysConfig{
 			Count:  2,
@@ -99,6 +108,10 @@ func loadFromEnv(config *Config) {
 
 	if logLevel := os.Getenv("LOG_LEVEL"); logLevel != "" {
 		config.LogLevel = strings.ToLower(logLevel)
+	}
+
+	if cacheControl, exists := os.LookupEnv("JWKS_CACHE_CONTROL"); exists {
+		config.JWKS.CacheControl = cacheControl
 	}
 
 	if keyIDs := os.Getenv("KEY_IDS"); keyIDs != "" {

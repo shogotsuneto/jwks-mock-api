@@ -122,6 +122,7 @@ curl -X DELETE http://localhost:3000/keys/key-to-remove
 - `JWT_AUDIENCE=dev-api` - JWT audience  
 - `KEY_COUNT=2` - Number of RSA key pairs
 - `KEY_IDS=key-1,key-2` - Comma-separated key IDs
+- `JWKS_CACHE_CONTROL=public, max-age=3600` - Cache-Control header for JWKS endpoint
 
 **Config File:** Create `config.yaml` (see `config.yaml.example`):
 ```yaml
@@ -130,6 +131,8 @@ server:
 jwt:
   issuer: "http://localhost:3000"
   audience: "dev-api"
+jwks:
+  cache_control: "public, max-age=3600"
 keys:
   count: 2
   key_ids: ["key-1", "key-2"]
